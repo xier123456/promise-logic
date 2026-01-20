@@ -1,6 +1,6 @@
 {
   "name": "promise-logic",
-  "version": "1.2.1",
+  "version": "1.3.1",
   "description": "Compose promises with logic gate semantics (AND, OR, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.",
   "type": "module",
   "main": "dist/index.cjs.js",
@@ -59,7 +59,7 @@
   "bugs": {
     "url": "https://github.com/xier123456/promise-logic.git/issues"
   },
-  "homepage": "https://github.com/xier123456/promise-logic/docs/promise_logic",
+  "homepage": "https://promise-logic-1a6v.vercel.app/",
   "engines": {
     "node": ">=14.0.0"
   },
