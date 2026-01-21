@@ -90,24 +90,6 @@ const failures = await PromiseLogic.allRejected([
   riskyOperation2()
 ]);
 
-// Get complete settlement information
-const allResults = await PromiseLogic.allResults([
-  operation1(),
-  operation2()
-]);
-
-// Strict all-success validation
-const allSuccessful = await PromiseLogic.allSuccessful([
-  validation1(),
-  validation2(),
-  validation3()
-]);
-
-// Strict all-failure validation
-const allFailed = await PromiseLogic.allFailed([
-  deprecatedCall1(),
-  deprecatedCall2()
-]);
 ```
 
 ## API Reference
@@ -142,15 +124,6 @@ Always resolves with an array of fulfilled values (empty if none).
 
 #### `PromiseLogic.allRejected(iterable)`
 Always resolves with an array of rejection reasons (empty if none).
-
-#### `PromiseLogic.allResults(iterable)`
-Equivalent to `Promise.allSettled`. Returns complete settlement information.
-
-#### `PromiseLogic.allSuccessful(iterable)`
-Resolves with all values only if every promise fulfills. Rejects otherwise.
-
-#### `PromiseLogic.allFailed(iterable)`
-Resolves with all rejection reasons only if every promise rejects. Rejects otherwise.
 
 ### Utility Methods
 
@@ -236,13 +209,6 @@ const [successfulResults, failedOperations] = await Promise.all([
   PromiseLogic.allFulfilled(operations),
   PromiseLogic.allRejected(operations)
 ]);
-
-// Comprehensive error reporting
-const results = await PromiseLogic.allResults(operations);
-const successful = results.filter(r => r.status === 'fulfilled');
-const failed = results.filter(r => r.status === 'rejected');
-
-console.log(`Operations: ${successful.length} successful, ${failed.length} failed`);
 ```
 
 ### State Management
