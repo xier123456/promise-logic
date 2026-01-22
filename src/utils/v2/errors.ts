@@ -9,6 +9,8 @@ export class PromiseLogicError extends Error {
   }
 }
 
+
+
 // Error factory function
 export function createLogicError(type: string, fulfilledCount: number, total: number, results: PromiseSettledResult<string|number|Error|unknown>[]): PromiseLogicError {
   const messages = {
@@ -23,3 +25,5 @@ export function createLogicError(type: string, fulfilledCount: number, total: nu
   
   return new PromiseLogicError(type, messages[type as keyof typeof messages] || 'Logic condition failed', results);
 }
+
+

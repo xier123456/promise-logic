@@ -1,21 +1,48 @@
-# PromiseLogic
 
-> Compose promises with logic gate semantics - Forget APIs, remember logic.
+# Promise Logic - Advanced Promise Logic Gates for Async Programming
 
-PromiseLogic is a comprehensive utility library that provides intuitive logical gate semantics for Promise composition. It extends the standard Promise API with logical operations that mirror digital circuit design, making asynchronous programming more intuitive and expressive.
-
-## Philosophy
-
-**"Forget APIs, remember logic."** - Replace fragmented API knowledge with fundamental logic concepts that work consistently across all asynchronous operations.
+Compose promises with logic gate semantics (AND, OR, NOT, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.
 
 ## Features
 
-- **Complete Logic Gate Semantics**: AND, OR, XOR, NAND, NOR, XNOR, Majority
-- **Extended Promise Operations**: All fulfilled/rejected results, complete settlement analysis
-- **Dual API Pattern**: Static class methods + Configurable factory function
-- **Production Ready**: Zero dependencies, complete TypeScript support
-- **Test Driven**: 100% test coverage with comprehensive edge cases
-- **Tree Shaking**: Optimized bundle output for modern build systems
+- **Logic Gate Semantics**: Extend Promise API with AND, OR, NOT, XOR, NAND, NOR, XNOR, Majority operations
+- **Dual Entry Points**: Choose between JavaScript or enhanced TypeScript experience
+- **Type Safety**: Complete TypeScript definitions with strict type checking
+- **Promise Utilities**: Additional utilities like Flip-Flop state management
+- **Zero Dependencies**: Pure JavaScript/TypeScript implementation
+- **Tree Shakeable**: Optimized for modern bundlers
+
+## Recent Updates
+
+### Version 2.3.2 Highlights
+
+**🚀 NOT Gate Implementation**  
+Introduced the NOT logic gate for promise inversion, enabling flexible negation patterns in asynchronous workflows:
+
+```javascript
+// Success -> Failure transformation
+await PromiseLogic.not(Promise.resolve('success')); // Rejects with 'success'
+
+// Failure -> Success transformation  
+const result = await PromiseLogic.not(Promise.reject('error')); // Resolves with 'error'
+```
+
+**📦 Enhanced TypeScript System**  
+Completely revamped TypeScript architecture with:
+- Full generic type propagation
+- Strict type checking with zero `any` types  
+- Advanced type inference for all operations
+- Seamless IDE integration with IntelliSense
+
+**⚡ Performance Optimizations**
+- Optimized internal logic for better efficiency
+- Reduced memory overhead in gate operations
+- Improved error handling and edge case management
+
+**📚 Documentation Enhancements**
+- Comprehensive API reference with TypeScript examples
+- Better usage guidelines and best practices
+- Clear entry point documentation for different environments
 
 ## Installation
 
@@ -25,290 +52,249 @@ npm install promise-logic
 
 ## Quick Start
 
-### Basic Logic Gates
+### JavaScript (Default)
 
 ```javascript
+// ES Modules
 import { PromiseLogic } from 'promise-logic';
 
-// AND logic - All promises must succeed (equivalent to Promise.all)
+// CommonJS
+const { PromiseLogic } = require('promise-logic');
+
+// Use logic gates
 const results = await PromiseLogic.and([
-  fetch('/api/users'),
-  fetch('/api/posts'),
-  fetch('/api/comments')
+  Promise.resolve('data1'),
+  Promise.resolve('data2')
 ]);
-
-// OR logic - Any promise succeeds (short-circuits on first success)
-const data = await PromiseLogic.or([
-  fetchPrimaryService(),
-  fetchBackupService()
-]);
-
-// XOR logic - Exactly one promise must succeed
-const uniqueResult = await PromiseLogic.xor([
-  cacheLookup(),
-  databaseQuery()
-]);
+// results = ['data1', 'data2']
 ```
 
-### Advanced Logic Operations
-
-```javascript
-// NAND logic - Not all promises succeed (at least one failure)
-const hasFailures = await PromiseLogic.nand([
-  validateInput(),
-  checkPermissions(),
-  verifyResources()
-]);
-
-// NOR logic - All promises must fail
-const allFailed = await PromiseLogic.nor([
-  experimentalFeature(),
-  deprecatedAPI()
-]);
-
-// Majority logic - More than half succeed
-const consensus = await PromiseLogic.majority([
-  server1.query(),
-  server2.query(),
-  server3.query()
-]);
-```
-
-### Extended Result Analysis
-
-```javascript
-// Get only successful results
-const successes = await PromiseLogic.allFulfilled([
-  apiCall1(),
-  apiCall2(),
-  apiCall3()
-]);
-
-// Get only failure reasons
-const failures = await PromiseLogic.allRejected([
-  riskyOperation1(),
-  riskyOperation2()
-]);
-
-```
-
-## API Reference
-
-### Core Logic Gates
-
-#### `PromiseLogic.and(iterable)`
-Equivalent to `Promise.all`. Resolves when all promises fulfill, rejects if any promise rejects.
-
-#### `PromiseLogic.or(iterable)`
-Resolves with the first successful promise. Rejects only if all promises reject.
-
-#### `PromiseLogic.xor(iterable)`
-Resolves when exactly one promise fulfills. Rejects if zero or multiple promises fulfill.
-
-#### `PromiseLogic.nand(iterable)`
-Resolves when not all promises fulfill (at least one rejection). Rejects if all promises fulfill.
-
-#### `PromiseLogic.nor(iterable)`
-Resolves when all promises reject. Rejects if any promise fulfills.
-
-#### `PromiseLogic.xnor(iterable)`
-Resolves when all promises fulfill or all reject. Rejects in mixed scenarios.
-
-#### `PromiseLogic.majority(iterable)`
-Resolves when more than half of promises fulfill. Rejects otherwise.
-
-### Extended Operations
-
-#### `PromiseLogic.allFulfilled(iterable)`
-Always resolves with an array of fulfilled values (empty if none).
-
-#### `PromiseLogic.allRejected(iterable)`
-Always resolves with an array of rejection reasons (empty if none).
-
-### Utility Methods
-
-#### `PromiseLogic.race(iterable)`
-Equivalent to `Promise.race`. Resolves or rejects with the first settled promise.
-
-#### `PromiseLogic.allSettled(iterable)`
-Equivalent to `Promise.allSettled`. Always resolves with settlement results.
-
-#### `PromiseLogic.createFlipFlop(initialState?)`
-Creates a stateful flip-flop utility for managing boolean state transitions.
-
-## Factory Function
-
-Create customized instances with method name transformations:
-
-```javascript
-import { createPromiseLogic } from 'promise-logic';
-
-// Default naming
-const logic = createPromiseLogic();
-await logic.and([promise1, promise2]);
-
-// With prefix
-const asyncLogic = createPromiseLogic({ prefix: 'async' });
-await asyncLogic.asyncand([promise1, promise2]);
-
-// With suffix
-const logicUtils = createPromiseLogic({ suffix: 'Logic' });
-await logicUtils.andLogic([promise1, promise2]);
-
-// With custom renaming
-const customLogic = createPromiseLogic({
-  rename: {
-    and: 'conjunction',
-    or: 'disjunction',
-    xor: 'exclusiveOr'
-  }
-});
-await customLogic.conjunction([promise1, promise2]);
-
-// Combined transformations
-const advancedLogic = createPromiseLogic({
-  prefix: 'async',
-  suffix: 'Logic',
-  rename: { and: 'conjunction' }
-});
-await advancedLogic.asyncconjunctionLogic([promise1, promise2]);
-```
-
-## Real-World Examples
-
-### Service Orchestration
-
-```javascript
-// Load balancing with fallback
-const userData = await PromiseLogic.or([
-  primaryUserService.getUser(id),
-  secondaryUserService.getUser(id),
-  cacheService.getUser(id)
-]);
-
-// Multi-step validation
-const isValid = await PromiseLogic.and([
-  validateEmail(email),
-  validatePassword(password),
-  checkRateLimit(ipAddress)
-]);
-
-// Consensus-based decision making
-const configuration = await PromiseLogic.majority([
-  configServer1.getConfig(),
-  configServer2.getConfig(),
-  configServer3.getConfig()
-]);
-```
-
-### Error Recovery & Analysis
-
-```javascript
-// Graceful degradation
-const [successfulResults, failedOperations] = await Promise.all([
-  PromiseLogic.allFulfilled(operations),
-  PromiseLogic.allRejected(operations)
-]);
-```
-
-### State Management
-
-```javascript
-// Flip-flop for toggle operations
-const toggle = PromiseLogic.createFlipFlop(false);
-
-// Toggle state and wait for change
-await toggle.toggle();
-console.log(toggle.getState()); // true
-
-// Set specific state
-await toggle.setState(false);
-```
-
-## Error Handling
-
-All logic gates throw `PromiseLogicError` with descriptive messages:
-
-```javascript
-try {
-  await PromiseLogic.xor([apiCall1(), apiCall2()]);
-} catch (error) {
-  if (error.type === 'XOR_ERROR') {
-    console.log('Expected exactly one successful call');
-  }
-  console.log('Failed promises:', error.results);
-}
-```
-
-## TypeScript Support
-
-Full TypeScript support with precise type inference:
+### TypeScript (Enhanced)
 
 ```typescript
-import { PromiseLogic } from 'promise-logic';
+// TypeScript version with full type inference
+import { PromiseLogic } from 'promise-logic/typescript';
 
-// Type inference for successful results
-const numbers: number[] = await PromiseLogic.and([
+// Type-safe operations with automatic inference
+const numbers = await PromiseLogic.and<number>([
+  Promise.resolve(1),
+  Promise.resolve(2)
+]); 
+
+const strings = await PromiseLogic.or<string>([
+  Promise.resolve('hello'),
+  Promise.resolve('world')
+]); 
+```
+
+## Core Logic Gates
+
+### `and(promises)`
+Resolves with all values when all promises fulfill. Equivalent to `Promise.all()`.
+
+```javascript
+const results = await PromiseLogic.and([
   Promise.resolve(1),
   Promise.resolve(2),
   Promise.resolve(3)
 ]);
+// results = [1, 2, 3]
+```
 
-// Type-safe error handling
+### `or(promises)`
+Resolves with the first fulfilled promise. Equivalent to `Promise.any()`.
+
+```javascript
+const result = await PromiseLogic.or([
+  Promise.reject('error'),
+  Promise.resolve('success')
+]);
+// result = 'success'
+```
+
+### `xor(promises)`
+Exclusive OR - resolves only when exactly one promise fulfills.
+
+```javascript
 try {
-  await PromiseLogic.nand(operations);
-} catch (error: PromiseLogicError) {
-  // error has full type information
-}
-```
-
-## Advanced Usage
-
-### Custom Logic Composition
-
-```javascript
-// Create complex logic flows
-async function advancedOperation(promises) {
-  const [successes, failures] = await Promise.all([
-    PromiseLogic.allFulfilled(promises),
-    PromiseLogic.allRejected(promises)
+  const result = await PromiseLogic.xor([
+    Promise.reject('error1'),
+    Promise.resolve('success'),
+    Promise.reject('error2')
   ]);
-
-  if (successes.length >= failures.length) {
-    return { data: successes, warnings: failures };
-  } else {
-    throw new Error('Operation mostly failed');
-  }
+  // result = 'success'
+} catch (error) {
+  // Throws if zero or multiple promises fulfill
 }
 ```
 
-### Performance Optimization
+### `nand(promises)`
+Not AND - resolves when not all promises fulfill.
 
 ```javascript
-// Batch processing with logic gates
-const batches = chunkArray(operations, BATCH_SIZE);
-const batchResults = await PromiseLogic.allFulfilled(
-  batches.map(batch => PromiseLogic.and(batch))
-);
+const results = await PromiseLogic.nand([
+  Promise.resolve('success'),
+  Promise.reject('error')
+]);
+// results = ['success']
+```
 
-// Flatten results
-const allResults = batchResults.flat();
+### `nor(promises)`
+Not OR - resolves only when all promises reject.
+
+```javascript
+const results = await PromiseLogic.nor([
+  Promise.reject('error1'),
+  Promise.reject('error2')
+]);
+// results = []
+```
+
+### `xnor(promises)`
+Exclusive NOR - resolves when all promises have the same outcome.
+
+```javascript
+const results = await PromiseLogic.xnor([
+  Promise.resolve('a'),
+  Promise.resolve('b')
+]);
+// results = ['a', 'b']
+```
+
+### `majority(promises)`
+Resolves when majority (>50%) of promises fulfill.
+
+```javascript
+const results = await PromiseLogic.majority([
+  Promise.resolve('a'),
+  Promise.resolve('b'),
+  Promise.reject('error')
+]);
+// results = ['a', 'b']
+```
+
+## NOT Gate - New in v2.3.2
+
+### `not(promise)`
+Inverts promise resolution - successful promises become rejections, and vice versa.
+
+```javascript
+// Success -> Failure
+try {
+  await PromiseLogic.not(Promise.resolve('success'));
+} catch (error) {
+  console.log(error); // 'success'
+}
+
+// Failure -> Success
+const result = await PromiseLogic.not(Promise.reject('error'));
+console.log(result); // 'error'
+```
+
+**Use Cases:**
+- Transform error handling patterns
+- Create conditional promise flows
+- Implement retry logic with inverted conditions
+- Build fallback mechanisms
+
+## Advanced Utilities
+
+### `race(promises)`
+Equivalent to `Promise.race()`.
+
+### `allSettled(promises)`
+Equivalent to `Promise.allSettled()`.
+
+### `allFulfilled(promises)`
+Resolves with all fulfilled values, ignoring rejections.
+
+### `allRejected(promises)`
+Resolves with all rejection reasons, ignoring fulfillments.
+
+### `createFlipFlop(initialState?)`
+Creates a stateful flip-flop for managing boolean state across async operations.
+
+```javascript
+const flipFlop = PromiseLogic.createFlipFlop(false);
+
+// Get current state
+console.log(flipFlop.getState()); // false
+
+// Toggle state
+await flipFlop.toggle();
+console.log(flipFlop.getState()); // true
+
+// Wait for specific state
+await flipFlop.waitFor(true); // Resolves immediately if already true
+
+// Async state change
+setTimeout(() => flipFlop.set(false), 100);
+await flipFlop.waitForChange(); // Waits for state change
+```
+
+## TypeScript Support - Enhanced in v2.3.2
+
+The TypeScript version (`promise-logic/typescript`) provides:
+
+- **Full Type Inference**: Automatic type deduction for all operations
+- **Strict Type Checking**: Zero `any` types, complete type safety
+- **IDE Support**: Enhanced IntelliSense and code completion
+- **Generic Type Propagation**: Proper handling of complex generic scenarios
+
+```typescript
+import { PromiseLogic } from 'promise-logic/typescript';
+
+// TypeScript infers everything
+const result = await PromiseLogic.and([
+  Promise.resolve({ id: 1, name: 'Alice' }),
+  Promise.resolve({ id: 2, name: 'Bob' })
+]);
+// result type: Array<{ id: number, name: string }>
+
+// Complex generic types work seamlessly
+async function processPromises<T>(promises: Promise<T>[]): Promise<T[]> {
+  return await PromiseLogic.and(promises);
+}
+```
+
+## Entry Points
+
+| Import Path | Purpose | Recommended For |
+|------------|---------|----------------|
+| `promise-logic` | Default JavaScript version | General use, mixed codebases |
+| `promise-logic/typescript` | Enhanced TypeScript version | TypeScript projects, strict type safety |
+
+## Migration Note
+
+If you're upgrading from earlier versions, note that the TypeScript system has been completely redesigned for better type safety and developer experience. All existing APIs remain compatible.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Check code coverage
+npm run test:coverage
 ```
 
 ## Contributing
 
-We welcome contributions! Please see our Contributing Guide for details.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
 
 ## License
 
-MIT License - see LICENSE for details.
-
-## Links
-
-- GitHub Repository: https://github.com/xier123456/promise-logic
-- npm Package: https://www.npmjs.com/package/promise-logic
-- Issue Tracker: https://github.com/xier123456/promise-logic/issues
-
----
-
-**PromiseLogic** - Making asynchronous logic as simple as digital circuits.
+MIT © 2026
