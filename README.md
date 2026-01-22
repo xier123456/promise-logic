@@ -1,300 +1,227 @@
+# Promise Logic - A Declarative Promise Library Based on Logic Gates
 
-# Promise Logic - Advanced Promise Logic Gates for Async Programming
+This description might sound a bit awkward, but it essentially means a Promise wrapper library designed based on the concept of logic gates, providing a more declarative syntax. However, promiseLogic's implementation is based on promises, so we can say it's a promise-based wrapper library.
 
-Compose promises with logic gate semantics (AND, OR, NOT, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.
+This design is really interesting. I spent a lot of time thinking about it and realized that promise state machines ultimately have only two outcomes: either fulfilled or rejected. This state design can be abstracted using boolean operations, allowing for declarative writing that reduces our memory burden and mental load during development. Let's look at some examples.
 
-## Features
+Installation:
 
-- **Logic Gate Semantics**: Extend Promise API with AND, OR, NOT, XOR, NAND, NOR, XNOR, Majority operations
-- **Dual Entry Points**: Choose between JavaScript or enhanced TypeScript experience
-- **Type Safety**: Complete TypeScript definitions with strict type checking
-- **Promise Utilities**: Additional utilities like Flip-Flop state management
-- **Zero Dependencies**: Pure JavaScript/TypeScript implementation
-- **Tree Shakeable**: Optimized for modern bundlers
-
-## Recent Updates
-
-### Version 2.3.2 Highlights
-
-**🚀 NOT Gate Implementation**  
-Introduced the NOT logic gate for promise inversion, enabling flexible negation patterns in asynchronous workflows:
-
-```javascript
-// Success -> Failure transformation
-await PromiseLogic.not(Promise.resolve('success')); // Rejects with 'success'
-
-// Failure -> Success transformation  
-const result = await PromiseLogic.not(Promise.reject('error')); // Resolves with 'error'
-```
-
-**📦 Enhanced TypeScript System**  
-Completely revamped TypeScript architecture with:
-- Full generic type propagation
-- Strict type checking with zero `any` types  
-- Advanced type inference for all operations
-- Seamless IDE integration with IntelliSense
-
-**⚡ Performance Optimizations**
-- Optimized internal logic for better efficiency
-- Reduced memory overhead in gate operations
-- Improved error handling and edge case management
-
-**📚 Documentation Enhancements**
-- Comprehensive API reference with TypeScript examples
-- Better usage guidelines and best practices
-- Clear entry point documentation for different environments
-
-## Installation
+npm:
 
 ```bash
 npm install promise-logic
 ```
 
-## Quick Start
-
-### JavaScript (Default)
-
 ```javascript
-// ES Modules
-import { PromiseLogic } from 'promise-logic';
+import PromiseLogic from 'promise-logic';
 
-// CommonJS
-const { PromiseLogic } = require('promise-logic');
-
-// Use logic gates
-const results = await PromiseLogic.and([
-  Promise.resolve('data1'),
-  Promise.resolve('data2')
-]);
-// results = ['data1', 'data2']
-```
-
-### TypeScript (Enhanced)
-
-```typescript
-// TypeScript version with full type inference
-import { PromiseLogic } from 'promise-logic/typescript';
-
-// Type-safe operations with automatic inference
-const numbers = await PromiseLogic.and<number>([
-  Promise.resolve(1),
-  Promise.resolve(2)
-]); 
-
-const strings = await PromiseLogic.or<string>([
-  Promise.resolve('hello'),
-  Promise.resolve('world')
-]); 
-```
-
-## Core Logic Gates
-
-### `and(promises)`
-Resolves with all values when all promises fulfill. Equivalent to `Promise.all()`.
-
-```javascript
-const results = await PromiseLogic.and([
+// Native Promise
+const promise = Promise.all([
   Promise.resolve(1),
   Promise.resolve(2),
   Promise.resolve(3)
 ]);
-// results = [1, 2, 3]
+
+// Promise Logic -- AND gate
+const promiseLogic = PromiseLogic.and([
+  Promise.resolve(1),
+  Promise.resolve(2),
+  Promise.resolve(3)
+]); // [1,2,3]
+
+// This syntax is more semantic, easier to understand, reduces team communication costs, and is more friendly to learners
+
+// Native promise
+const promise = Promise.any([
+  Promise.resolve(1),
+  Promise.reject(2),
+  Promise.resolve(3)
+]); // 1
+
+// Promise Logic -- OR gate
+const promiseLogicOr = PromiseLogic.or([
+  Promise.resolve(1),
+  Promise.reject(2),
+  Promise.resolve(3)
+]); // 1
+
+// The result of or is consistent with native promise.any, but from here, I think you should see the pattern, and there's more to it
 ```
 
-### `or(promises)`
-Resolves with the first fulfilled promise. Equivalent to `Promise.any()`.
+It also supports TypeScript syntax:
 
 ```javascript
+const promiseLogic =
+  PromiseLogic.and <
+  number >
+  [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)]; // [1,2,3]
+
+const promiseLogicOr =
+  PromiseLogic.or <
+  string >
+  [
+    Promise.resolve('data 1'),
+    Promise.reject('error 2'),
+    Promise.resolve('data 3')
+  ]; // 'data 1'
+```
+
+#### We can also create flexible combinations for complex request resources
+
+```javascript
+// OR + AND
+// Suppose we have a scenario where we want to get data from multiple data sources, need the fastest request result, but also need all requests in one request group to succeed before returning a result. Implementing this with native Promise would be extremely complex
+
+// Now we can implement it like this:
 const result = await PromiseLogic.or([
-  Promise.reject('error'),
-  Promise.resolve('success')
-]);
-// result = 'success'
+  PromiseLogic.and([
+    // Request group 1
+    fetch('/api/data1'), // Request 1
+    fetch('/api/data2') // Request 2
+  ]),
+  PromiseLogic.and([
+    // Request group 2
+    fetch('/api/data3'), // Request 3
+    fetch('/api/data4') // Request 4
+  ])
+]); // Result: [fetch('/api/data1'),fetch('/api/data2')] or [fetch('/api/data3'),fetch('/api/data4')] or error
+
+// This returns the fastest successful result, and this successful result must come from a request group where all requests in the AND combination have succeeded
 ```
 
-### `xor(promises)`
-Exclusive OR - resolves only when exactly one promise fulfills.
+Of course, there are other logic gates like exclusive OR, NAND, NOR, XNOR, majority, etc. Their implementations are all very simple, so I won't introduce them one by one. They all use the same pattern but have different logical semantics, so you can choose which one to use based on your scenario.
+
+#### `PromiseLogic.xor`
+
+#### `PromiseLogic.majority`
+
+#### `PromiseLogic.nor`
+
+#### `PromiseLogic.xnor`
+
+#### `PromiseLogic.nand`
+
+#### `PromiseLogic.not`
+
+We've kept the native methods for more straightforward usage:
+
+- `PromiseLogic.allSettled`
+- `PromiseLogic.race`
+
+### `PromiseLogic.createFlipFlop` - Async Boolean Flip-Flop
+
+This is used to create a stateful flip-flop for managing boolean states in asynchronous operations. You might be wondering why, but let's continue:
+
+Here's how to use this flip-flop to manage connection states:
 
 ```javascript
-try {
-  const result = await PromiseLogic.xor([
-    Promise.reject('error1'),
-    Promise.resolve('success'),
-    Promise.reject('error2')
-  ]);
-  // result = 'success'
-} catch (error) {
-  // Throws if zero or multiple promises fulfill
+const connectionState = PromiseLogic.createFlipFlop(false);
+
+// Managing device connection state
+class ConnectionManager {
+  constructor() {
+    this.connectionState = PromiseLogic.createFlipFlop(false); // Initial disconnected state
+  }
+
+  async connect() {
+    console.log('Connecting...');
+    // Simulate connection process
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await this.connectionState.set(true); // Set connected state
+    console.log('Connected!');
+  }
+
+  async disconnect() {
+    console.log('Disconnecting...');
+    await this.connectionState.set(false); // Set disconnected state
+    console.log('Disconnected!');
+  }
+
+  async waitForConnection() {
+    console.log('Waiting for connection...');
+    await this.connectionState.waitFor(true); // Wait until connected
+    console.log('Connection established!');
+  }
+
+  async monitorConnection() {
+    // Monitor state changes
+    while (true) {
+      const newState = await this.connectionState.waitForChange();
+      console.log('Connection state changed to:', newState ? 'connected' : 'disconnected');
+      if (!newState) break; // Exit if disconnected
+    }
+  }
 }
+
+// Usage
+const manager = new ConnectionManager();
+
+// Start monitoring in background
+manager.monitorConnection();
+
+// Connect and wait
+await manager.connect();
+await manager.waitForConnection();
+
+// Disconnect after 2 seconds
+setTimeout(async () => {
+  await manager.disconnect();
+}, 2000);
 ```
 
-### `nand(promises)`
-Not AND - resolves when not all promises fulfill.
+This is because in asynchronous operations, we often need to make decisions and execute subsequent operations based on a certain state, and this flip-flop can help us manage this state in asynchronous operations.
+
+API
 
 ```javascript
-const results = await PromiseLogic.nand([
-  Promise.resolve('success'),
-  Promise.reject('error')
+PromiseLogic.createFlipFlop(initialState);
+```
+
+**Parameters:**
+
+- `initialState` (boolean, optional): Initial state, default value is `false`
+
+**Returns:**
+An object with the following methods:
+
+- `getState()`: Returns the current boolean state
+- `set(newState: boolean)`: Sets the new state and returns Promise<boolean>
+- `toggle()`: Toggles the current state and returns Promise<boolean>
+- `waitForChange()`: Returns a Promise that resolves when the state changes
+- `waitFor(targetState: boolean)`: Returns a Promise that resolves when the state matches the target
+
+### `createPromiseLogic(options)`
+
+Creates a customizable object containing PromiseLogic methods with configurable naming.
+
+**Parameters:**
+
+- `options` (object, optional): Configuration options
+  - `prefix` (string, optional): String to prepend to all method names
+  - `suffix` (string, optional): String to append to all method names
+  - `rename` (Record<string, string>, optional): Mapping of original method names to new names
+
+**Returns:**
+An object containing PromiseLogic methods with customized names.
+
+```javascript
+// Basic usage - returns all methods with default names
+const logic = createPromiseLogic();
+
+// Combined options
+const combined = createPromiseLogic({
+  prefix: 'async', // Add prefix
+  suffix: 'Op', // Add suffix
+  rename: {
+    // API renaming
+    and: 'Conjunction',
+    or: 'Disjunction'
+  }
+});
+
+// Call combined method (async)+ (Conjunction) + (Op)
+const result = await logic.asycnConjunctionOp([
+  fetch('/api/data1'),
+  fetch('/api/data2')
 ]);
-// results = ['success']
 ```
-
-### `nor(promises)`
-Not OR - resolves only when all promises reject.
-
-```javascript
-const results = await PromiseLogic.nor([
-  Promise.reject('error1'),
-  Promise.reject('error2')
-]);
-// results = []
-```
-
-### `xnor(promises)`
-Exclusive NOR - resolves when all promises have the same outcome.
-
-```javascript
-const results = await PromiseLogic.xnor([
-  Promise.resolve('a'),
-  Promise.resolve('b')
-]);
-// results = ['a', 'b']
-```
-
-### `majority(promises)`
-Resolves when majority (>50%) of promises fulfill.
-
-```javascript
-const results = await PromiseLogic.majority([
-  Promise.resolve('a'),
-  Promise.resolve('b'),
-  Promise.reject('error')
-]);
-// results = ['a', 'b']
-```
-
-## NOT Gate - New in v2.3.2
-
-### `not(promise)`
-Inverts promise resolution - successful promises become rejections, and vice versa.
-
-```javascript
-// Success -> Failure
-try {
-  await PromiseLogic.not(Promise.resolve('success'));
-} catch (error) {
-  console.log(error); // 'success'
-}
-
-// Failure -> Success
-const result = await PromiseLogic.not(Promise.reject('error'));
-console.log(result); // 'error'
-```
-
-**Use Cases:**
-- Transform error handling patterns
-- Create conditional promise flows
-- Implement retry logic with inverted conditions
-- Build fallback mechanisms
-
-## Advanced Utilities
-
-### `race(promises)`
-Equivalent to `Promise.race()`.
-
-### `allSettled(promises)`
-Equivalent to `Promise.allSettled()`.
-
-### `allFulfilled(promises)`
-Resolves with all fulfilled values, ignoring rejections.
-
-### `allRejected(promises)`
-Resolves with all rejection reasons, ignoring fulfillments.
-
-### `createFlipFlop(initialState?)`
-Creates a stateful flip-flop for managing boolean state across async operations.
-
-```javascript
-const flipFlop = PromiseLogic.createFlipFlop(false);
-
-// Get current state
-console.log(flipFlop.getState()); // false
-
-// Toggle state
-await flipFlop.toggle();
-console.log(flipFlop.getState()); // true
-
-// Wait for specific state
-await flipFlop.waitFor(true); // Resolves immediately if already true
-
-// Async state change
-setTimeout(() => flipFlop.set(false), 100);
-await flipFlop.waitForChange(); // Waits for state change
-```
-
-## TypeScript Support - Enhanced in v2.3.2
-
-The TypeScript version (`promise-logic/typescript`) provides:
-
-- **Full Type Inference**: Automatic type deduction for all operations
-- **Strict Type Checking**: Zero `any` types, complete type safety
-- **IDE Support**: Enhanced IntelliSense and code completion
-- **Generic Type Propagation**: Proper handling of complex generic scenarios
-
-```typescript
-import { PromiseLogic } from 'promise-logic/typescript';
-
-// TypeScript infers everything
-const result = await PromiseLogic.and([
-  Promise.resolve({ id: 1, name: 'Alice' }),
-  Promise.resolve({ id: 2, name: 'Bob' })
-]);
-// result type: Array<{ id: number, name: string }>
-
-// Complex generic types work seamlessly
-async function processPromises<T>(promises: Promise<T>[]): Promise<T[]> {
-  return await PromiseLogic.and(promises);
-}
-```
-
-## Entry Points
-
-| Import Path | Purpose | Recommended For |
-|------------|---------|----------------|
-| `promise-logic` | Default JavaScript version | General use, mixed codebases |
-| `promise-logic/typescript` | Enhanced TypeScript version | TypeScript projects, strict type safety |
-
-## Migration Note
-
-If you're upgrading from earlier versions, note that the TypeScript system has been completely redesigned for better type safety and developer experience. All existing APIs remain compatible.
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Run tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Check code coverage
-npm run test:coverage
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
-
-## License
-
-MIT © 2026
