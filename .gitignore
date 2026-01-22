@@ -1,3 +1,5 @@
+# .gitignore - 控制版本管理的文件
+
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -7,6 +9,7 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
+out/
 
 # Environment variables
 .env
@@ -41,3 +44,6 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+
+# TypeScript build info
+*.tsbuildinfo

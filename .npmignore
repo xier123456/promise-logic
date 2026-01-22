@@ -1,24 +1,38 @@
+# .npmignore - 控制发布到 npm 的文件
+
 # Source files
 src/
 docs/
+example/
+
 # Test files
 test/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
 
-# Example files
-examples/
+# Build artifacts (excluding dist/ for publish)
+coverage/
+.nyc_output/
 
-# Development configuration files
+# Development configuration
 .eslintrc.js
 .prettierrc
-jest.config.js
-rollup.config.js
+jest.config.*
+rollup.config.*
+tsconfig.*.json
+babel.config.*
 
 # Documentation (except README)
+CHANGELOG.md
+CONTRIBUTING.md
 项目执行文档.md
 
-# Build artifacts (but keep dist/ which is published)
-build/
-coverage/
+# Development scripts
+scripts/
+bin/
 
 # IDE files
 .vscode/
@@ -44,11 +58,18 @@ yarn-error.log*
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # Temporary folders
 tmp/
 temp/
+
+# Source map files 
+*.map
+
+
+# 保留发布的核心文件
+!dist/index.*.js
+!dist/factory.*.js
+!dist/types/

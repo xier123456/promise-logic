@@ -11,7 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
     "declarationMap": false,
-    "sourceMap": true,
+    "sourceMap": false,
     "outDir": "./dist/test",
     "rootDir": "./src"
   },
