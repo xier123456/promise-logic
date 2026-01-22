@@ -1,227 +1,136 @@
-# Promise Logic - A Declarative Promise Library Based on Logic Gates
 
-This description might sound a bit awkward, but it essentially means a Promise wrapper library designed based on the concept of logic gates, providing a more declarative syntax. However, promiseLogic's implementation is based on promises, so we can say it's a promise-based wrapper library.
 
-This design is really interesting. I spent a lot of time thinking about it and realized that promise state machines ultimately have only two outcomes: either fulfilled or rejected. This state design can be abstracted using boolean operations, allowing for declarative writing that reduces our memory burden and mental load during development. Let's look at some examples.
 
-Installation:
+### **1. Core Philosophy**
 
-npm:
+**Replace API Memory with Logical Concepts**  
+The design philosophy of `promise-logic` is: **Developers should focus on business logic, not the details of Promise APIs**.  
+Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have naming and semantics that are not intuitive enough, especially in complex asynchronous scenarios where code readability rapidly declines.  
+`promise-logic` abstracts asynchronous combinations into logical operations like `AND`, `OR`, `XOR` through the concept of **Logic Gates**, making code semantically clear and self-explanatory.
+
+---
+
+### **2. Features**
+
+1. **Logical Semantics**  
+   - `AND`: All tasks must succeed (equivalent to `Promise.all`)  
+   - `OR`: At least one task succeeds (equivalent to `Promise.race`)  
+   - `XOR`: **Exactly one task succeeds** (no direct equivalent in traditional Promise)  
+   - `NAND`: All tasks fail  
+   - `Majority`: Most tasks succeed  
+
+2. **Zero Dependencies**  
+   Only depends on native Promise, no additional runtime dependencies.
+
+3. **Full Test Coverage**  
+   All logic gates have undergone rigorous unit testing to ensure behavior meets expectations.
+
+4. **Clear Error Classification**  
+   - `PromiseLogicError` unified error type  
+   - `error.type` distinguishes specific logical errors (e.g., `'XOR_ERROR'`)
+
+---
+
+### **3. Installation**
 
 ```bash
 npm install promise-logic
 ```
 
+---
+
+### **4. Quick Start**
+
+#### Example: Primary/Backup Service Call (XOR Scenario)
 ```javascript
-import PromiseLogic from 'promise-logic';
+import { XOR } from 'promise-logic';
 
-// Native Promise
-const promise = Promise.all([
-  Promise.resolve(1),
-  Promise.resolve(2),
-  Promise.resolve(3)
-]);
+// Primary service call
+const primary = fetch('https://api.main.com/data');
+// Backup service call
+const backup = fetch('https://api.backup.com/data');
 
-// Promise Logic -- AND gate
-const promiseLogic = PromiseLogic.and([
-  Promise.resolve(1),
-  Promise.resolve(2),
-  Promise.resolve(3)
-]); // [1,2,3]
-
-// This syntax is more semantic, easier to understand, reduces team communication costs, and is more friendly to learners
-
-// Native promise
-const promise = Promise.any([
-  Promise.resolve(1),
-  Promise.reject(2),
-  Promise.resolve(3)
-]); // 1
-
-// Promise Logic -- OR gate
-const promiseLogicOr = PromiseLogic.or([
-  Promise.resolve(1),
-  Promise.reject(2),
-  Promise.resolve(3)
-]); // 1
-
-// The result of or is consistent with native promise.any, but from here, I think you should see the pattern, and there's more to it
-```
-
-It also supports TypeScript syntax:
-
-```javascript
-const promiseLogic =
-  PromiseLogic.and <
-  number >
-  [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)]; // [1,2,3]
-
-const promiseLogicOr =
-  PromiseLogic.or <
-  string >
-  [
-    Promise.resolve('data 1'),
-    Promise.reject('error 2'),
-    Promise.resolve('data 3')
-  ]; // 'data 1'
-```
-
-#### We can also create flexible combinations for complex request resources
-
-```javascript
-// OR + AND
-// Suppose we have a scenario where we want to get data from multiple data sources, need the fastest request result, but also need all requests in one request group to succeed before returning a result. Implementing this with native Promise would be extremely complex
-
-// Now we can implement it like this:
-const result = await PromiseLogic.or([
-  PromiseLogic.and([
-    // Request group 1
-    fetch('/api/data1'), // Request 1
-    fetch('/api/data2') // Request 2
-  ]),
-  PromiseLogic.and([
-    // Request group 2
-    fetch('/api/data3'), // Request 3
-    fetch('/api/data4') // Request 4
-  ])
-]); // Result: [fetch('/api/data1'),fetch('/api/data2')] or [fetch('/api/data3'),fetch('/api/data4')] or error
-
-// This returns the fastest successful result, and this successful result must come from a request group where all requests in the AND combination have succeeded
-```
-
-Of course, there are other logic gates like exclusive OR, NAND, NOR, XNOR, majority, etc. Their implementations are all very simple, so I won't introduce them one by one. They all use the same pattern but have different logical semantics, so you can choose which one to use based on your scenario.
-
-#### `PromiseLogic.xor`
-
-#### `PromiseLogic.majority`
-
-#### `PromiseLogic.nor`
-
-#### `PromiseLogic.xnor`
-
-#### `PromiseLogic.nand`
-
-#### `PromiseLogic.not`
-
-We've kept the native methods for more straightforward usage:
-
-- `PromiseLogic.allSettled`
-- `PromiseLogic.race`
-
-### `PromiseLogic.createFlipFlop` - Async Boolean Flip-Flop
-
-This is used to create a stateful flip-flop for managing boolean states in asynchronous operations. You might be wondering why, but let's continue:
-
-Here's how to use this flip-flop to manage connection states:
-
-```javascript
-const connectionState = PromiseLogic.createFlipFlop(false);
-
-// Managing device connection state
-class ConnectionManager {
-  constructor() {
-    this.connectionState = PromiseLogic.createFlipFlop(false); // Initial disconnected state
-  }
-
-  async connect() {
-    console.log('Connecting...');
-    // Simulate connection process
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    await this.connectionState.set(true); // Set connected state
-    console.log('Connected!');
-  }
-
-  async disconnect() {
-    console.log('Disconnecting...');
-    await this.connectionState.set(false); // Set disconnected state
-    console.log('Disconnected!');
-  }
-
-  async waitForConnection() {
-    console.log('Waiting for connection...');
-    await this.connectionState.waitFor(true); // Wait until connected
-    console.log('Connection established!');
-  }
-
-  async monitorConnection() {
-    // Monitor state changes
-    while (true) {
-      const newState = await this.connectionState.waitForChange();
-      console.log('Connection state changed to:', newState ? 'connected' : 'disconnected');
-      if (!newState) break; // Exit if disconnected
+// Execute XOR logic: exactly one success
+XOR(primary, backup)
+  .then(result => {
+    console.log('Successfully fetched data:', result);
+  })
+  .catch(error => {
+    if (error.type === 'XOR_ERROR') {
+      console.error('Both primary and backup services succeeded or failed, which does not meet XOR semantics');
+    } else {
+      console.error('Network error:', error);
     }
-  }
-}
-
-// Usage
-const manager = new ConnectionManager();
-
-// Start monitoring in background
-manager.monitorConnection();
-
-// Connect and wait
-await manager.connect();
-await manager.waitForConnection();
-
-// Disconnect after 2 seconds
-setTimeout(async () => {
-  await manager.disconnect();
-}, 2000);
+  });
 ```
 
-This is because in asynchronous operations, we often need to make decisions and execute subsequent operations based on a certain state, and this flip-flop can help us manage this state in asynchronous operations.
-
-API
-
+#### Example: Majority Decision (Majority Scenario)
 ```javascript
-PromiseLogic.createFlipFlop(initialState);
+import { Majority } from 'promise-logic';
+
+const services = [
+  fetch('https://api.node1.com/vote'),
+  fetch('https://api.node2.com/vote'),
+  fetch('https://api.node3.com/vote')
+];
+
+Majority(...services)
+  .then(results => {
+    console.log('Majority of services returned success:', results);
+  })
+  .catch(error => {
+    console.error('Majority of services failed:', error);
+  });
 ```
 
-**Parameters:**
+---
 
-- `initialState` (boolean, optional): Initial state, default value is `false`
+### **5. API Reference**
 
-**Returns:**
-An object with the following methods:
+| API        | Description                                                                 |
+| :--------- | :-------------------------------------------------------------------------- |
+| `AND`      | All Promises succeed, returns result array; any failure causes overall failure. |
+| `OR`       | At least one Promise succeeds, returns first success result; all failures cause overall failure. |
+| `XOR`      | **Exactly one Promise succeeds**, returns that result; otherwise throws `XOR_ERROR`. |
+| `NAND`     | All Promises fail, returns error array; any success causes overall failure. |
+| `Majority` | More than half of Promises succeed, returns success result array; otherwise overall failure. |
 
-- `getState()`: Returns the current boolean state
-- `set(newState: boolean)`: Sets the new state and returns Promise<boolean>
-- `toggle()`: Toggles the current state and returns Promise<boolean>
-- `waitForChange()`: Returns a Promise that resolves when the state changes
-- `waitFor(targetState: boolean)`: Returns a Promise that resolves when the state matches the target
+---
 
-### `createPromiseLogic(options)`
+### **6. Real-world Application Scenarios**
 
-Creates a customizable object containing PromiseLogic methods with configurable naming.
+1. **Primary/Backup Service Calls**  
+   - Use `XOR` to ensure **exactly one service responds**, avoiding duplicate processing.  
+2. **Distributed Decision Making**  
+   - Use `Majority` to implement majority consensus (e.g., distributed voting).  
+3. **Resource Competition**  
+   - Use `OR` to get the first available resource (e.g., CDN node selection).  
+4. **Full-link Validation**  
+   - Use `AND` to ensure all dependent services succeed (e.g., order creation).  
 
-**Parameters:**
+---
 
-- `options` (object, optional): Configuration options
-  - `prefix` (string, optional): String to prepend to all method names
-  - `suffix` (string, optional): String to append to all method names
-  - `rename` (Record<string, string>, optional): Mapping of original method names to new names
+### **7. Contribution Guide**
 
-**Returns:**
-An object containing PromiseLogic methods with customized names.
+1. **Development Environment**  
+   ```bash
+   git clone https://github.com/haowhite/promise-logic.git
+   cd promise-logic
+   npm install
+   ```
+2. **Testing**  
+   ```bash
+   npm test
+   ```
+3. **Commit Guidelines**  
+   - Commit messages must include prefixes like `feat:` (new feature), `fix:` (bug fix), `docs:` (documentation).  
+   - Pull Requests must include test cases.  
 
-```javascript
-// Basic usage - returns all methods with default names
-const logic = createPromiseLogic();
+---
 
-// Combined options
-const combined = createPromiseLogic({
-  prefix: 'async', // Add prefix
-  suffix: 'Op', // Add suffix
-  rename: {
-    // API renaming
-    and: 'Conjunction',
-    or: 'Disjunction'
-  }
-});
+### **8. Resource Links**
 
-// Call combined method (async)+ (Conjunction) + (Op)
-const result = await logic.asycnConjunctionOp([
-  fetch('/api/data1'),
-  fetch('/api/data2')
-]);
-```
+- **GitHub Repository**：[https://github.com/xier123456/promise-logic](https://github.com/xier123456/promise-logic)  
+- **npm Package**：[https://www.npmjs.com/package/promise-logic](https://www.npmjs.com/package/promise-logic)  
+- **Issue Tracking**：[GitHub Issues](https://github.com/xier123456/promise-logic/issues)  
+
