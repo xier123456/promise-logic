@@ -1,4 +1,4 @@
-import { createLogicError } from './utils/errors.js';
+import { createLogicError } from '../utils/v1/errors.js';
 
 export class PromiseLogic {
   static and(iterable) {
@@ -8,6 +8,15 @@ export class PromiseLogic {
   static or(iterable) {
     return Promise.any(iterable);
   }
+
+  
+static  not(promise) {
+  return Promise.resolve(promise).then(
+    (value) => Promise.reject(value),
+    (reason) => Promise.resolve(reason)
+  )
+  .catch((error) => Promise.resolve(error));
+}
 
   static race(iterable) {
     return Promise.race(iterable);
@@ -97,6 +106,7 @@ export class PromiseLogic {
       }
     });
   }
+
 
   // 返回所有成功的Promise结果
   static allFulfilled(iterable) {

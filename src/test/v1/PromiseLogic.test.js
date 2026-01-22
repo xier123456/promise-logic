@@ -1,5 +1,4 @@
-import { PromiseLogic } from '../src/PromiseLogic.js';
-
+import { PromiseLogic } from '../../v1/PromiseLogic.js';
 describe('PromiseLogic', () => {
   describe('and (Promise.all)', () => {
     test('should resolve with all values when all promises fulfill', async () => {

@@ -5,7 +5,7 @@
  * Tests all methods and edge cases
  */
 
-import { PromiseLogic, createPromiseLogic } from '../src/index.js';
+import { PromiseLogic, createPromiseLogic } from '../../v1/index.js';
 
 class PromiseLogicTestSuite {
   constructor() {

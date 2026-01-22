@@ -10,10 +10,13 @@ export function createPromiseLogic(options = {}) {
     race: PromiseLogic.race,
     allSettled: PromiseLogic.allSettled,
     xor: PromiseLogic.xor,
+    not: PromiseLogic.not,
     nand: PromiseLogic.nand,
     nor: PromiseLogic.nor,
     xnor: PromiseLogic.xnor,
-    majority: PromiseLogic.majority
+    majority: PromiseLogic.majority,
+    allFulfilled: PromiseLogic.allFulfilled,
+    allRejected: PromiseLogic.allRejected
   };
   
   // 应用命名转换

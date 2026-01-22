@@ -1,4 +1,4 @@
-import { createPromiseLogic } from '../src/factory.js';
+import { createPromiseLogic } from '../../v1/factory.js';
 
 describe('createPromiseLogic', () => {
   test('should create object with default method names', () => {
