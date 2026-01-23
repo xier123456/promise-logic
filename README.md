@@ -45,7 +45,7 @@ npm install promise-logic
 
 #### Example: Primary/Backup Service Call (XOR Scenario)
 ```javascript
-import PromiseLogic from 'promise-logic';
+import { PromiseLogic } from 'promise-logic';
 
 // Primary service call
 const primary = fetch('https://api.main.com/data');
@@ -68,7 +68,7 @@ PromiseLogic.xor([primary, backup])
 
 #### Example: Majority Decision (Majority Scenario)
 ```javascript
-import PromiseLogic from 'promise-logic';
+import { PromiseLogic } from 'promise-logic';
 
 const services = [
   fetch('https://api.node1.com/vote'),
@@ -86,7 +86,7 @@ PromiseLogic.majority(services)
 ```
 
 ```typescript
-import PromiseLogic from 'promise-logic/typescript';
+import { PromiseLogic } from 'promise-logic/typescript';
 
 const services = [
   fetch('https://api.node1.com/vote'),
