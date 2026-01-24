@@ -10,8 +10,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": false,
-    "declarationMap": false,
-    "sourceMap": false,
     "outDir": "./dist/v2",
     "rootDir": "./src"
   },

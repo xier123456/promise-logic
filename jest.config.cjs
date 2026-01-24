@@ -9,23 +9,25 @@ module.exports = {
     }]
   },
   
-  // 忽略 node_modules 中的转换，但允许我们的源代码被转换
+
   transformIgnorePatterns: [
     'node_modules/(?!(.*))'
   ],
   
-  // 模块映射
+
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^(\\.{1,2}/.*)\\.ts$': '$1'
   },
   
+
   // 测试文件匹配模式
   testMatch: [
     '**/src/test/**/*.test.js',
     '**/src/test/**/*.test.ts'
   ],
   
+  // 收集覆盖率的文件模式
   collectCoverageFrom: [
     'src/**/*.js',
     'src/**/*.ts',
@@ -35,12 +37,13 @@ module.exports = {
   
   coverageThreshold: {
     global: {
-      branches: 80,
-      functions: 80,
-      lines: 80,
-      statements: 80
+      branches: 80,  // 分支覆盖率
+      functions: 80,  // 函数覆盖率
+      lines: 80,   // 行覆盖率
+      statements: 80  // 语句覆盖率
     }
   },
   
+  // 模块文件扩展名
   moduleFileExtensions: ['js', 'ts', 'json', 'jsx', 'tsx', 'node']
 }

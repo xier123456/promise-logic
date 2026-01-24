@@ -118,11 +118,10 @@ class PromiseLogicTestSuite {
         rename: { and: 'conjunction' }
       });
       
-      const result = await logic.conjunction([
-        Promise.resolve('test1'),
-        Promise.resolve('test2')
-      ]);
-      
+   const result = await logic.asyncconjunction([
+  Promise.resolve('test1'),
+  Promise.resolve('test2')
+]);
       return JSON.stringify(result) === JSON.stringify(['test1', 'test2']);
     });
   }
@@ -136,7 +135,7 @@ class PromiseLogicTestSuite {
           Promise.reject('error1'),
           Promise.reject('error2')
         ]);
-        return false; // Should not reach here
+        return false; 
       } catch (error) {
         return error.type === 'XOR_ERROR';
       }

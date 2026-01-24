@@ -6,7 +6,8 @@ export class PromiseLogic {
   }
 
   static or(iterable) {
-    return Promise.any(iterable);
+
+    return Promise.any(iterable)
   }
 
   
@@ -22,6 +23,7 @@ static  not(promise) {
     return Promise.race(iterable);
   }
 
+  
   static allSettled(iterable) {
     return Promise.allSettled(iterable);
   }
@@ -96,7 +98,7 @@ static  not(promise) {
       const fulfilledCount = fulfilled.length;
       const total = results.length;
       
-      // 多数逻辑：成功数 > 失败数
+      //多数逻辑：成功数 > 失败数
       if (fulfilledCount > total - fulfilledCount) {
         // 超过半数成功，返回成功的值数组
         return fulfilled.map(result => result.value);
@@ -123,6 +125,8 @@ static  not(promise) {
       return rejected.map(result => result.reason);
     });
   }
+
+  //测试中...
   static createFlipFlop(initialState = false) {
     let state = initialState;
     let resolveCurrent = null;

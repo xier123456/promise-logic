@@ -12,6 +12,10 @@ export class PromiseLogicError extends Error {
 
 
 // Error factory function
+//type:用于指定错误类型，如XOR_ERROR、NAND_ERROR等
+//fulfilledCount:已完成的Promise数量
+//total:总Promise数量
+//results:PromiseSettledResult数组，包含所有Promise的状态和值/原因
 export function createLogicError(type: string, fulfilledCount: number, total: number, results: PromiseSettledResult<string|number|Error|unknown>[]): PromiseLogicError {
   const messages = {
     XOR_ERROR: `XOR condition failed: expected exactly 1 promise to fulfill, but ${fulfilledCount} fulfilled.`,

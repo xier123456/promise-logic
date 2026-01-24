@@ -1,39 +1,39 @@
 
 
 
-### **1. 核心理念**
+### **1. Core Philosophy**
 
-**用逻辑概念替代 API 记忆**  
-`promise-logic` 的设计哲学是：**开发者应专注于业务逻辑，而非 Promise API 的细节**。  
-传统 Promise 组合（如 `Promise.all`、`Promise.race`）的命名与语义不够直观，尤其在复杂异步场景下，代码可读性迅速下降。  
-`promise-logic` 通过**逻辑门（Logic Gate）** 的方式，将异步组合抽象为 `and`、`or`、`xor` 等逻辑操作，使代码语义清晰、逻辑自解释。
-
----
-
-### **2. 功能特性**
-
-1. **逻辑语义化**  
-   - `and`：所有任务必须成功（等价于 `Promise.all`）  
-   - `or`：至少一个任务成功（等价于 `Promise.race`）  
-   - `xor`：**有且仅有一个任务成功**  
-   - `nand`：所有任务均失败  
-
-   - `not`：反转单个 Promise 的结果  
-   - `majority`：多数任务成功  
-
-2. **零依赖**  
-   仅依赖原生 Promise，无额外运行时依赖。
-
-3. **全测试覆盖**  
-   所有逻辑门均经过严格单元测试，确保行为符合预期。
-
-4. **错误分类明确**  
-   - `PromiseLogicError` 统一错误类型  
-   - `error.type` 区分具体逻辑错误（如 `'XOR_ERROR'`）
+**Replace API Memory with Logical Concepts**  
+The design philosophy of `promise-logic` is: **Developers should focus on business logic, not the details of Promise APIs**.  
+Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have naming and semantics that are not intuitive enough, especially in complex asynchronous scenarios where code readability rapidly declines.  
+`promise-logic` abstracts asynchronous combinations into logical operations like `and`, `or`, `xor` through the concept of **Logic Gates**, making code semantically clear and self-explanatory.
 
 ---
 
-### **3. 安装**
+### **2. Features**
+
+1. **Logical Semantics**  
+   - `and`: All tasks must succeed (equivalent to `Promise.all`)  
+   - `or`: At least one task succeeds (equivalent to `Promise.race`)  
+   - `xor`: **Exactly one task succeeds** (no direct equivalent in traditional Promise)  
+   - `nand`: All tasks fail  
+
+   - `not`: Inverts the result of a single Promise  
+   - `majority`: Most tasks succeed  
+
+2. **Zero Dependencies**  
+   Only depends on native Promise, no additional runtime dependencies.
+
+3. **Full Test Coverage**  
+   All logic gates have undergone rigorous unit testing to ensure behavior meets expectations.
+
+4. **Clear Error Classification**  
+   - `PromiseLogicError` unified error type  
+   - `error.type` distinguishes specific logical errors (e.g., `'XOR_ERROR'`)
+
+---
+
+### **3. Installation**
 
 ```bash
 npm install promise-logic
@@ -41,32 +41,32 @@ npm install promise-logic
 
 ---
 
-### **4. 快速开始**
+### **4. Quick Start**
 
-#### 示例：主备服务调用（XOR 场景）
+#### Example: Primary/Backup Service Call (XOR Scenario)
 ```javascript
 import { PromiseLogic } from 'promise-logic';
 
-// 主服务调用
+// Primary service call
 const primary = fetch('https://api.main.com/data');
-// 备用服务调用
+// Backup service call
 const backup = fetch('https://api.backup.com/data');
 
-// 执行 XOR 逻辑：有且仅有一个成功
+// Execute XOR logic: exactly one success
 PromiseLogic.xor([primary, backup])
   .then(result => {
-    console.log('成功获取数据:', result);
+    console.log('Successfully fetched data:', result);
   })
   .catch(error => {
     if (error.type === 'XOR_ERROR') {
-      console.error('主备服务均成功或均失败，不符合 XOR 语义');
+      console.error('Both primary and backup services succeeded or failed, which does not meet XOR semantics');
     } else {
-      console.error('网络错误:', error);
+      console.error('Network error:', error);
     }
   });
 ```
 
-#### 示例：多数决决策（Majority 场景）
+#### Example: Majority Decision (Majority Scenario)
 ```javascript
 import { PromiseLogic } from 'promise-logic';
 
@@ -78,10 +78,10 @@ const services = [
 
 PromiseLogic.majority(services)
   .then(results => {
-    console.log('多数服务返回成功:', results);
+    console.log('Majority of services returned success:', results);
   })
   .catch(error => {
-    console.error('多数服务失败:', error);
+    console.error('Majority of services failed:', error);
   });
 ```
 
@@ -94,66 +94,65 @@ const services = [
   fetch('https://api.node3.com/vote')
 ];
 
-//可以进行类型断言，也可以默认让PromiseLogic自动推断类型
 PromiseLogic.majority<Response>(services)
   .then(results => {
-    console.log('多数服务返回成功:', results);
+    console.log('Majority of services returned success:', results);
   })
   .catch(error => {
-    console.error('多数服务失败:', error);
+    console.error('Majority of services failed:', error);
   });
 ```
 
 ---
 
-### **5. API 参考**
+### **5. API Reference**
 
-| API        | 说明                                                                 |
-| :--------- | :------------------------------------------------------------------- |
-| `and`      | 所有 Promise 成功，返回结果数组；任一失败则整体失败。           |
-| `or`       | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败。   |
-| `xor`      | **有且仅有一个 Promise 成功**，返回该结果；否则抛出 `XOR_ERROR`。 |
-| `nand`     | 所有 Promise 均失败，返回错误数组；任一成功则整体失败。         |
-| `not`      | 反转单个 Promise 的结果 |
-| `majority` | 超过半数 Promise 成功，返回成功结果数组；否则整体失败。         |
-
----
-
-### **6. 实际应用场景**
-
-1. **主备服务调用**  
-   - 使用 `xor` 确保**有且仅有一个服务响应**，避免重复处理。  
-2. **分布式决策**  
-   - 使用 `majority` 实现多数决共识（如分布式投票）。  
-3. **资源竞争**  
-   - 使用 `or` 获取首个可用资源（如 CDN 节点选择）。  
-   - 使用 `not` 检查资源是否可用。  
-4. **全链路校验**  
-   - 使用 `and` 确保所有依赖服务均成功（如订单创建）。  
+| API        | Description                                                                 |
+| :--------- | :-------------------------------------------------------------------------- |
+| `and`      | All Promises succeed, returns result array; any failure causes overall failure. |
+| `or`       | At least one Promise succeeds, returns first success result; all failures cause overall failure. |
+| `xor`      | **Exactly one Promise succeeds**, returns that result; otherwise throws `XOR_ERROR`. |
+| `nand`     | All Promises fail, returns error array; any success causes overall failure. |
+| `not`      | Inverts the result of a single Promise |
+| `majority` | More than half of Promises succeed, returns success result array; otherwise overall failure. |
 
 ---
 
-### **7. 贡献指南**
+### **6. Real-world Application Scenarios**
 
-1. **开发环境**  
+1. **Primary/Backup Service Calls**  
+   - Use `xor` to ensure **exactly one service responds**, avoiding duplicate processing.  
+2. **Distributed Decision Making**  
+   - Use `majority` to implement majority consensus (e.g., distributed voting).  
+3. **Resource Competition**  
+   - Use `or` to get the first available resource (e.g., CDN node selection). 
+   - Use `not` to check if a resource is available.  
+4. **Full-link Validation**  
+   - Use `and` to ensure all dependent services succeed (e.g., order creation).  
+
+---
+
+### **7. Contribution Guide**
+
+1. **Development Environment**  
    ```bash
    git clone https://github.com/haowhite/promise-logic.git
    cd promise-logic
    npm install
    ```
-2. **测试**  
+2. **Testing**  
    ```bash
    npm test
    ```
-3. **提交规范**  
-   - 提交信息需包含 `feat:`（新功能）、`fix:`（修复）、`docs:`（文档）前缀。  
-   - Pull Request 需附带测试用例。  
+3. **Commit Guidelines**  
+   - Commit messages must include prefixes like `feat:` (new feature), `fix:` (bug fix), `docs:` (documentation).  
+   - Pull Requests must include test cases.  
 
 ---
 
-### **8. 资源链接**
+### **8. Resource Links**
 
-- **GitHub 仓库**：[https://github.com/xier123456/promise-logic](https://github.com/xier123456/promise-logic)  
-- **npm 包**：[https://www.npmjs.com/package/promise-logic](https://www.npmjs.com/package/promise-logic)  
-- **Issue 跟踪**：[GitHub Issues](https://github.com/xier123456/promise-logic/issues)  
+- **GitHub Repository**：[https://github.com/xier123456/promise-logic](https://github.com/xier123456/promise-logic)  
+- **npm Package**：[https://www.npmjs.com/package/promise-logic](https://www.npmjs.com/package/promise-logic)  
+- **Issue Tracking**：[GitHub Issues](https://github.com/xier123456/promise-logic/issues)  
 

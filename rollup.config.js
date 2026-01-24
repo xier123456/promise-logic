@@ -3,10 +3,12 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import dts from 'rollup-plugin-dts';
 import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser'; // 压缩代码
 
 
 
-
+// 环境变量判断是否为生产环境
+const isProd = process.env.NODE_ENV === 'production';
 
 
 export default defineConfig([
@@ -19,15 +21,15 @@ export default defineConfig([
       {
         file: 'dist/index.esm.js',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       },
       {
         file: 'dist/index.cjs.js',
         format: 'cjs',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
-    plugins: [nodeResolve(), commonjs()],
+    plugins: [nodeResolve(), commonjs(), isProd && terser()],
     external: []
   },
 
@@ -38,15 +40,15 @@ export default defineConfig([
       {
         file: 'dist/factory.esm.js',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       },
       {
         file: 'dist/factory.cjs.js',
         format: 'cjs',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
-    plugins: [nodeResolve(), commonjs()],
+    plugins: [nodeResolve(), commonjs(), isProd && terser()],
     external: []
   },
 
@@ -56,14 +58,14 @@ export default defineConfig([
     output: [
       {
         file: 'dist/types/index.d.ts',
-        format: 'esm'
+        format: 'esm',
+        sourcemap: !isProd
       }
     ],
     plugins: [dts({
       compilerOptions: {
-        sourcemap: false,
-        declaration: false,
-        declarationMap: false
+        sourceMap: !isProd,
+        declarationMap: !isProd
       }
     })]
   },
@@ -74,14 +76,14 @@ export default defineConfig([
     output: [
       {
         file: 'dist/types/factory.d.ts',
-        format: 'esm'
+        format: 'esm',
+        sourcemap: !isProd
       }
     ],
     plugins: [dts({
       compilerOptions: {
-        sourcemap: false,
-        declaration: false,
-        declarationMap: false
+        sourceMap: !isProd,
+        declarationMap: !isProd
       }
     })]
   },
@@ -95,19 +97,19 @@ export default defineConfig([
       {
         file: 'dist/v2/index.esm.js',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       },
       {
         file: 'dist/v2/index.cjs.js',
         format: 'cjs',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
-    plugins: [nodeResolve(), commonjs(), typescript({
+    plugins: [nodeResolve(), commonjs(), isProd && terser(), typescript({
       tsconfig: './tsconfig.v2.json',
-      sourceMap: false,
+      sourceMap: !isProd,
        declaration: false,
-      declarationMap: false
+      declarationMap: !isProd
     })],
     external: []
   },
@@ -119,17 +121,19 @@ export default defineConfig([
       {
         file: 'dist/v2/factory.esm.js',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       },
       {
         file: 'dist/v2/factory.cjs.js',
         format: 'cjs',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
-    plugins: [nodeResolve(), commonjs(), typescript({
+    plugins: [nodeResolve(), commonjs(), isProd && terser(), typescript({
       tsconfig: './tsconfig.v2.json',
-      sourceMap: false
+      sourceMap: !isProd,
+      declaration: false,
+      declarationMap: !isProd
     })],
     external: []
   },
@@ -141,12 +145,12 @@ export default defineConfig([
       {
         file: 'dist/v2/types/index.d.ts',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
     plugins: [dts({
       compilerOptions: {
-        sourcemap: false
+        sourcemap: !isProd
       }
     })]
   },
@@ -158,12 +162,12 @@ export default defineConfig([
       {
         file: 'dist/v2/types/factory.d.ts',
         format: 'esm',
-        sourcemap: false
+        sourcemap: !isProd
       }
     ],
     plugins: [dts({
       compilerOptions: {
-        sourcemap: false
+        sourcemap: !isProd
       }
     })]
   }
