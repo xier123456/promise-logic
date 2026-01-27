@@ -16,18 +16,17 @@ export class PromiseWithTimer<T> {
 
   // 添加超时功能
   maxTimer(ms: number): Promise<T> {
-    return Promise.race([
+    let timerId: NodeJS.Timeout;
+   const promiseTime = Promise.race([
       this.promise,
       new Promise<never>((_, reject) => {
-       const timer = setTimeout(() => {
+       timerId = setTimeout(() => {
            reject(new Error(`Promise timed out after ${ms}ms,${this.promise}`));
         }, ms);
-
-        return ()=>{
-          clearTimeout(timer)
-        }
+ 
       })
     ]);
+    return promiseTime.finally(() => clearTimeout(timerId));
   }
 
   // 实现 then 方法
