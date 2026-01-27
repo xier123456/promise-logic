@@ -1,6 +1,6 @@
 {
   "name": "promise-logic",
-  "version": "2.6.0",
+  "version": "2.6.1",
   "description": "Compose promises with logic gate semantics (AND, OR, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.",
   "type": "module",
   "main": "dist/index.cjs.js",
@@ -31,7 +31,8 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production rollup -c",
     "dev": "cross-env NODE_ENV=development rollup -c -w",
-    "test": "jest --config jest.config.cjs",
+    "test": "node src/test/test.js",
+    "test:jest": "jest --config jest.config.cjs",
     "test:watch": "jest --watch --config jest.config.cjs",
     "test:coverage": "jest --coverage --config jest.config.cjs",
     "lint": "eslint src test",

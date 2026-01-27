@@ -24,7 +24,9 @@ module.exports = {
   // 测试文件匹配模式
   testMatch: [
     '**/src/test/**/*.test.js',
-    '**/src/test/**/*.test.ts'
+    '**/src/test/**/*.test.ts',
+    '**/src/test/**/test.js',
+    '**/src/test/**/test.ts'
   ],
   
   // 收集覆盖率的文件模式
