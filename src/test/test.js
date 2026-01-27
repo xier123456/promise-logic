@@ -57,7 +57,7 @@ async function testV1Methods() {
     const raceResult = await PromiseLogic.race([
       new Promise(resolve => setTimeout(() => resolve('slow'), 100)),
       new Promise(resolve => setTimeout(() => resolve('fast'), 10))
-    ]);
+    ])
     console.log('race 方法测试通过:', raceResult);
   } catch (error) {
     console.log('race 方法测试失败:', error.message);

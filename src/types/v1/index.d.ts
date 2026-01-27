@@ -1,3 +1,11 @@
+export class PromiseWithTimer<T> {
+  maxTimer(ms: number): Promise<T>;
+  then<U>(onfulfilled?: ((value: T) => U | PromiseLike<U>) | null, onrejected?: ((reason: Error) => U | PromiseLike<U>) | null): PromiseWithTimer<U>;
+  catch<U>(onrejected?: ((reason: Error) => U | PromiseLike<U>) | null): PromiseWithTimer<U>;
+  finally(onfinally?: (() => void) | null): PromiseWithTimer<T>;
+  toPromise(): Promise<T>;
+}
+
 export class PromiseLogicError extends Error {
   type: 'XOR_ERROR' | 'NAND_ERROR' | 'NOR_ERROR' | 'XNOR_ERROR' | 'MAJORITY_ERROR' | 'ALL_SUCCESSFUL_ERROR' | 'ALL_FAILED_ERROR';
   results: PromiseSettledResult<unknown>[];
@@ -11,20 +19,19 @@ export interface FlipFlop {
 }
 
 export class PromiseLogic {
-  static and<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static or<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static race<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T>;
-  static allSettled<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<T>[]>;
+  static and<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static or<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static race<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static allSettled<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<PromiseSettledResult<T>[]>;
   
-  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static majority<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
+  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static majority<T>(iterable: Iterable<T | PromiseLike<T>>, options?: { max: number }): PromiseWithTimer<T[]>;
   
-  // 返回所有成功或失败结果的方法
-  static allFulfilled<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static allRejected<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<any[]>;
+  static allFulfilled<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static allRejected<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<unknown[]>;
   
   static createFlipFlop(initialState?: boolean): FlipFlop;
 }

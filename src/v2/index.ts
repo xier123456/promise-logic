@@ -1,5 +1,5 @@
 // TypeScript version entry point
-export { PromiseLogic } from './PromiseLogic';
+export { PromiseLogic, PromiseWithTimer } from './PromiseLogic';
 export { createPromiseLogic } from './factory';
 export { PromiseLogicError } from '../utils/v2/errors';
 

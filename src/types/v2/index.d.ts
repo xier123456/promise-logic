@@ -1,6 +1,26 @@
 // v2版本类型定义 (TypeScript版本 - 现代化设计)
 
 /**
+ * PromiseWithTimer 包装类 - 提供超时控制功能
+ */
+export class PromiseWithTimer<T> {
+  /** 添加超时控制 */
+  maxTimer(ms: number): Promise<T>;
+  
+  /** Promise 链式调用 */
+  then<U>(onfulfilled?: ((value: T) => U | PromiseLike<U>) | null, onrejected?: ((reason: Error) => U | PromiseLike<U>) | null): PromiseWithTimer<U>;
+  
+  /** 错误处理 */
+  catch<U>(onrejected?: ((reason: Error) => U | PromiseLike<U>) | null): PromiseWithTimer<U>;
+  
+  /** 最终处理 */
+  finally(onfinally?: (() => void) | null): PromiseWithTimer<T>;
+  
+  /** 转换为普通 Promise */
+  toPromise(): Promise<T>;
+}
+
+/**
  * Promise逻辑错误类
  * @deprecated 在v2版本中建议使用更具体的错误类型
  */
@@ -36,21 +56,21 @@ export interface FlipFlop {
  */
 export class PromiseLogic {
   // 基础逻辑门
-  static and<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static or<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T>;
-  static race<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T>;
-  static allSettled<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<PromiseSettledResult<T>[]>;
+  static and<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static or<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static race<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static allSettled<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<PromiseSettledResult<T>[]>;
   
   // 扩展逻辑门
-  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T>;
-  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
-  static majority<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]>;
+  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static majority<T>(iterable: Iterable<T | PromiseLike<T>>, options?: { max: number }): PromiseWithTimer<T[]>;
   
   // 实用方法
-  static allFulfilled(iterable: Iterable<PromiseLike<unknown>>): Promise<unknown[]>;
-  static allRejected<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<unknown[]>;
+  static allFulfilled(iterable: Iterable<PromiseLike<unknown>>): PromiseWithTimer<unknown[]>;
+  static allRejected<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<unknown[]>;
   
   // 状态管理
   static createFlipFlop(initialState?: boolean): FlipFlop;

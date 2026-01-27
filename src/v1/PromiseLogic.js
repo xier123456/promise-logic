@@ -1,6 +1,6 @@
 import { createLogicError } from '../utils/v1/errors.js';
 
-class PromiseWithTimer {
+export class PromiseWithTimer {
   constructor(promise) {
     this.promise = promise;
   }
