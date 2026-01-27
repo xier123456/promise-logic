@@ -5,18 +5,18 @@ export function createPromiseLogic(options = {}) {
   
   // 基础方法映射
   const methods = {
-    and: PromiseLogic.and,
-    or: PromiseLogic.or,
-    race: PromiseLogic.race,
-    allSettled: PromiseLogic.allSettled,
-    xor: PromiseLogic.xor,
-    not: PromiseLogic.not,
-    nand: PromiseLogic.nand,
-    nor: PromiseLogic.nor,
-    xnor: PromiseLogic.xnor,
-    majority: PromiseLogic.majority,
-    allFulfilled: PromiseLogic.allFulfilled,
-    allRejected: PromiseLogic.allRejected
+    and: PromiseLogic.and.bind(PromiseLogic),
+    or: PromiseLogic.or.bind(PromiseLogic),
+    race: PromiseLogic.race.bind(PromiseLogic),
+    allSettled: PromiseLogic.allSettled.bind(PromiseLogic),
+    xor: PromiseLogic.xor.bind(PromiseLogic),
+    not: PromiseLogic.not.bind(PromiseLogic),
+    nand: PromiseLogic.nand.bind(PromiseLogic),
+    nor: PromiseLogic.nor.bind(PromiseLogic),
+    xnor: PromiseLogic.xnor.bind(PromiseLogic),
+    majority: PromiseLogic.majority.bind(PromiseLogic),
+    allFulfilled: PromiseLogic.allFulfilled.bind(PromiseLogic),
+    allRejected: PromiseLogic.allRejected.bind(PromiseLogic)
   };
   
   // 应用命名转换

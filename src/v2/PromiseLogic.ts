@@ -6,14 +6,55 @@ import { NorGate } from '../gates/nor';
 import { XnorGate } from '../gates/xnor';
 import { XorGate } from '../gates/xor';
 
-export class PromiseLogicError extends Error {
-  constructor(
-    public type: string,
-    message: string,
-    public results: PromiseSettledResult<unknown>[]
-  ) {
-    super(message);
-    this.name = 'PromiseLogicError';
+// 包装定时器
+export class PromiseWithTimer<T> {
+  private promise: Promise<T>;
+
+  constructor(promise: Promise<T>) {
+    this.promise = promise;
+  }
+
+  // 添加超时功能
+  maxTimer(ms: number): Promise<T> {
+    return Promise.race([
+      this.promise,
+      new Promise<never>((_, reject) => {
+       const timer = setTimeout(() => {
+           reject(new Error(`Promise timed out after ${ms}ms,${this.promise}`));
+        }, ms);
+
+        return ()=>{
+          clearTimeout(timer)
+        }
+      })
+    ]);
+  }
+
+  // 实现 then 方法
+  then<U>(
+    onfulfilled?: ((value: T) => U | PromiseLike<U>) | null,
+    onrejected?: ((reason: Error) => U | PromiseLike<U>) | null
+  ): PromiseWithTimer<U> {
+    return new PromiseWithTimer(this.promise.then(onfulfilled, onrejected));
+  }
+
+  // 实现 catch 方法
+  catch<U>(
+    onrejected?: ((reason: Error) => U | PromiseLike<U>) | null
+  ): PromiseWithTimer<U> {
+    return new PromiseWithTimer(this.promise.catch(onrejected) as Promise<U>);
+  }
+
+  // 实现 finally 方法
+  finally(
+    onfinally?: (() => void) | null
+  ): PromiseWithTimer<T> {
+    return new PromiseWithTimer(this.promise.finally(onfinally));
+  }
+
+  // 转换为普通 Promise
+  toPromise(): Promise<T> {
+    return this.promise;
   }
 }
 
@@ -38,77 +79,76 @@ export class PromiseLogic {
     };
   }
 
-  // Core Logic Gates
-  static and<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
-    return this.gates.and.execute(iterable);
+  static and<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+    return new PromiseWithTimer(this.gates.and.execute(iterable));
   }
 
-  static or<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T> {
-    return this.gates.or.execute(iterable);
+  static or<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T> {
+    return new PromiseWithTimer(this.gates.or.execute(iterable));
   }
 
-  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T> {
-    return this.gates.xor.execute(iterable);
+  static xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T> {
+    return new PromiseWithTimer(this.gates.xor.execute(iterable));
   }
 
-  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
-    return this.gates.nand.execute(iterable);
+  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+    return new PromiseWithTimer(this.gates.nand.execute(iterable));
   }
 
-  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
-    return this.gates.nor.execute(iterable);
+  static nor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+    return new PromiseWithTimer(this.gates.nor.execute(iterable));
   }
 
-  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
-    return this.gates.xnor.execute(iterable);
+  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+    return new PromiseWithTimer(this.gates.xnor.execute(iterable));
   }
 
-  static majority<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
-    return this.gates.majority.execute(iterable);
+  static majority<T>(iterable: Iterable<T | PromiseLike<T>>, options: { max: number } = { max: 0.5 }): PromiseWithTimer<T[]> {
+    return new PromiseWithTimer(this.gates.majority.execute(iterable, options));
   }
 
   // Extended Operations
   static allFulfilled(
     iterable: Iterable<PromiseLike<unknown>>
-  ): Promise<unknown[]> {
-    return Promise.allSettled(iterable).then((results) => {
+  ): PromiseWithTimer<unknown[]> {
+    return new PromiseWithTimer(Promise.allSettled(iterable).then((results) => {
       const fulfilled = results.filter(
         (result) => result.status === 'fulfilled'
       );
       return fulfilled.map((result) => result.value);
-    });
+    }));
   }
 
   static allRejected<T>(
     iterable: Iterable<T | PromiseLike<T>>
-  ): Promise<unknown[]> {
-    return Promise.allSettled(iterable).then((results) => {
+  ): PromiseWithTimer<unknown[]> {
+    return new PromiseWithTimer(Promise.allSettled(iterable).then((results) => {
       return results
         .filter(
           (result): result is PromiseRejectedResult =>
             result.status === 'rejected'
         )
         .map((result) => result.reason);
-    });
+    }));
   }
 
   // NOT logic - Inverts promise resolution
-  static not<T>(promise: PromiseLike<T>): Promise<unknown> {
-    return Promise.resolve(promise).then(
+  static not<T>(promise: PromiseLike<T>): PromiseWithTimer<unknown> {
+    return new PromiseWithTimer(Promise.resolve(promise).then(
       (value) => Promise.reject(value),
       (reason) => Promise.resolve(reason)
-    );
+    ));
   }
 
   // Utility Methods
-  static race<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T> {
-    return Promise.race(iterable);
+  static race<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T> {
+    return new PromiseWithTimer(Promise.race(iterable));
   }
 
   static allSettled<T>(
     iterable: Iterable<T | PromiseLike<T>>
-  ): Promise<PromiseSettledResult<T>[]> {
-    return Promise.allSettled(iterable);
+  ): PromiseWithTimer<PromiseSettledResult<T>[]> {
+    return new PromiseWithTimer(Promise.allSettled(iterable));
   }
 
   static createFlipFlop(initialState: boolean = false): FlipFlop {

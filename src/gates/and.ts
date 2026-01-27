@@ -1,4 +1,4 @@
-import { PromiseLogicError } from '../v2/PromiseLogic';
+import { PromiseLogicError } from '../utils/v2/errors';
 import { BaseGate } from './BaseGate';
 
 export class AndGate extends BaseGate {

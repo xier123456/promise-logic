@@ -31,6 +31,14 @@ Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have na
    - `PromiseLogicError` unified error type  
    - `error.type` distinguishes specific logical errors (e.g., `'XOR_ERROR'`)
 
+5. **Timeout Control**  
+   - `maxTimer`: Adds timeout functionality to any Promise operation
+
+6. **Extended Operations**  
+   - `allFulfilled`: Returns all successful results
+   - `allRejected`: Returns all failed results
+   - `allSettled`: Returns all results (both successful and failed)
+
 ---
 
 ### **3. Installation**
@@ -103,18 +111,93 @@ PromiseLogic.majority<Response>(services)
   });
 ```
 
+#### Example: Timeout Control
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+// Execute operation with timeout
+PromiseLogic.and([
+  Promise.resolve(1),
+  new Promise(resolve => setTimeout(resolve, 1000)), // 1 second operation
+  Promise.resolve(3)
+])
+.maxTimer(2000) // 2 second timeout
+.then(result => {
+  console.log('Operation completed within timeout:', result);
+})
+.catch(error => {
+  console.error('Operation timed out or failed:', error.message);
+});
+```
+
+#### Example: Extended Operations
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const operations = [
+  Promise.resolve('success1'),
+  Promise.reject('error1'),
+  Promise.resolve('success2'),
+  Promise.reject('error2')
+];
+
+// Get all successful results
+PromiseLogic.allFulfilled(operations)
+  .then(results => {
+    console.log('Successful results:', results); // ['success1', 'success2']
+  });
+
+// Get all failed results
+PromiseLogic.allRejected(operations)
+  .then(errors => {
+    console.log('Failed results:', errors); // ['error1', 'error2']
+  });
+
+// Get all results (both success and failure)
+PromiseLogic.allSettled(operations)
+  .then(results => {
+    console.log('All results:', results);
+  });
+```
+
+#### Example: Custom majority threshold
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const services = [
+  Promise.resolve('service1'),
+  Promise.resolve('service2'),
+  Promise.reject('service3'),
+  Promise.reject('service4')
+];
+
+// Default threshold (0.5): requires at least 3 successes
+// Custom threshold (0.4): requires at least 2 successes
+PromiseLogic.majority(services, { max: 0.4 })
+  .then(results => {
+    console.log('Custom threshold met, successful results:', results); // ['service1', 'service2']
+  })
+  .catch(error => {
+    console.error('Custom threshold not met:', error);
+  });
+```
+
 ---
 
 ### **5. API Reference**
 
-| API        | Description                                                                 |
-| :--------- | :-------------------------------------------------------------------------- |
-| `and`      | All Promises succeed, returns result array; any failure causes overall failure. |
-| `or`       | At least one Promise succeeds, returns first success result; all failures cause overall failure. |
-| `xor`      | **Exactly one Promise succeeds**, returns that result; otherwise throws `XOR_ERROR`. |
-| `nand`     | All Promises fail, returns error array; any success causes overall failure. |
-| `not`      | Inverts the result of a single Promise |
-| `majority` | More than half of Promises succeed, returns success result array; otherwise overall failure. |
+| API           | Description                                                                 |
+| :------------ | :-------------------------------------------------------------------------- |
+| `and`         | All Promises succeed, returns result array; any failure causes overall failure. |
+| `or`          | At least one Promise succeeds, returns first success result; all failures cause overall failure. |
+| `xor`         | **Exactly one Promise succeeds**, returns that result; otherwise throws `XOR_ERROR`. |
+| `nand`        | All Promises fail, returns error array; any success causes overall failure. |
+| `not`         | Inverts the result of a single Promise |
+| `majority`    | More than half of Promises succeed, returns success result array; otherwise overall failure. Accepts `options` parameter, where `max` property can customize threshold (default: 0.5). |
+| `allFulfilled` | Returns all successful results as an array, ignoring failures. |
+| `allRejected` | Returns all failed results as an array, ignoring successes. |
+| `allSettled`  | Returns all results (both successful and failed) as an array. |
+| `maxTimer`    | Adds timeout functionality to any Promise operation (unit: milliseconds). |
 
 ---
 

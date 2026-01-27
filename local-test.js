@@ -1,104 +1,101 @@
-/**
- * Local test file to verify package imports work correctly
- */
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import path from 'path';
+// 测试 PromiseLogic 是否正常工作
+import { PromiseLogic } from 'promise-logic';
 
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// 测试 AND 逻辑
+console.log('测试 AND 逻辑:');
+PromiseLogic.and([
+  Promise.resolve('成功1'),
+  Promise.resolve('成功2'),
+  Promise.resolve('成功3')
+]).then(result => {
+  console.log('AND 结果:', result);
+}).catch(error => {
+  console.log('AND 错误:', error);
+});
 
-// Test 1: Import main library (v1 - JavaScript version)
-try {
-  // We'll use dynamic import to load the built files
-  const v1Path = path.join(__dirname, 'dist', 'index.cjs.js');
-  if (fs.existsSync(v1Path)) {
-    const v1Logic = await import('./dist/index.cjs.js');
-    console.log('✅ Main library import successful');
-    console.log('   PromiseLogic available:', typeof v1Logic.PromiseLogic);
-    console.log('   createPromiseLogic available:', typeof v1Logic.createPromiseLogic);
-  } else {
-    console.log('⚠️  Main library file not found at:', v1Path);
-  }
-} catch (error) {
-  console.error('❌ Main library import failed:', error.message);
-}
+// 测试 OR 逻辑
+console.log('\n测试 OR 逻辑:');
+PromiseLogic.or([
+  Promise.reject('失败1'),
+  Promise.resolve('成功2'),
+  Promise.reject('失败3')
+]).then(result => {
+  console.log('OR 结果:', result);
+}).catch(error => {
+  console.log('OR 错误:', error);
+});
 
-// Test 2: Import v2 library (TypeScript version)
-try {
-  const v2Path = path.join(__dirname, 'dist', 'v2', 'index.cjs.js');
-  if (fs.existsSync(v2Path)) {
-    const v2Logic = await import('./dist/v2/index.cjs.js');
-    console.log('✅ V2 library import successful');
-    console.log('   PromiseLogic available:', typeof v2Logic.PromiseLogic);
-    console.log('   createPromiseLogic available:', typeof v2Logic.createPromiseLogic);
-  } else {
-    console.log('⚠️  V2 library file not found at:', v2Path);
-  }
-} catch (error) {
-  console.error('❌ V2 library import failed:', error.message);
-}
+// 测试 RACE 逻辑
+console.log('\n测试 RACE 逻辑:');
+PromiseLogic.race([
+  new Promise(resolve => setTimeout(() => resolve('延迟2秒'), 2000)),
+  new Promise(resolve => setTimeout(() => resolve('延迟1秒'), 1000)),
+  new Promise(resolve => setTimeout(() => resolve('延迟3秒'), 3000))
+]).then(result => {
+  console.log('RACE 结果:', result);
+});
 
-// Test 3: Test basic functionality if files exist
-async function testFunctionality() {
-  console.log('\n--- Testing functionality ---');
-  
-  const v1Path = path.join(__dirname, 'dist', 'index.cjs.js');
-  const v2Path = path.join(__dirname, 'dist', 'v2', 'index.cjs.js');
-  
-  if (fs.existsSync(v1Path)) {
-    try {
-      // Test v1 functionality
-      const v1Module = await import('./dist/index.cjs.js');
-      const v1Result = await v1Module.PromiseLogic.and([
-        Promise.resolve('v1-test'),
-        Promise.resolve('success')
-      ]);
-      console.log('✅ V1 and() works:', v1Result);
-    } catch (error) {
-      console.error('❌ V1 functionality failed:', error.message);
-    }
-  }
-  
-  if (fs.existsSync(v2Path)) {
-    try {
-      // Test v2 functionality
-      const v2Module = await import('./dist/v2/index.cjs.js');
-      
-      const v2Result = await v2Module.PromiseLogic.and([
-        Promise.resolve('v2-test'),
-        Promise.resolve('success')
-      ]);
-      console.log('✅ V2 and() works:', v2Result);
-      
-      // Test special operations
-      try {
-        const orResult = await v2Module.PromiseLogic.or([
-          Promise.reject(new Error('test error')),
-          Promise.resolve('first success')
-        ]);
-        console.log('✅ V2 or() works:', orResult);
-      } catch (error) {
-        console.log('✅ V2 or() correctly handled rejection:', error.message);
-      }
-      
-      try {
-        const xorResult = await v2Module.PromiseLogic.xor([
-          Promise.reject(new Error('failed')),
-          Promise.resolve('success'),
-          Promise.reject(new Error('also failed'))
-        ]);
-        console.log('✅ V2 xor() works:', xorResult);
-      } catch (error) {
-        console.log('✅ V2 xor() correctly handled rejection:', error.message);
-      }
-    } catch (error) {
-      console.error('❌ V2 functionality failed:', error.message);
-    }
-  }
-}
+// 测试 XOR 逻辑
+console.log('\n测试 XOR 逻辑:');
+// 测试恰好一个成功的情况
+PromiseLogic.xor([
+  Promise.reject('失败1'),
+  Promise.resolve('成功2'),
+  Promise.reject('失败3')
+]).then(result => {
+  console.log('XOR 结果 (恰好一个成功):', result);
+}).catch(error => {
+  console.log('XOR 错误 (恰好一个成功):', error.message);
+});
 
-// Run functionality tests
-await testFunctionality();
-console.log('\n--- All tests completed ---');
+// 测试 NOT 逻辑
+console.log('\n测试 NOT 逻辑:');
+// 测试反转成功的 Promise
+PromiseLogic.not(Promise.resolve('成功')).then(result => {
+  console.log('NOT 结果 (反转成功):', result);
+}).catch(error => {
+  console.log('NOT 错误 (反转成功):', error);
+});
+
+// 测试反转失败的 Promise
+PromiseLogic.not(Promise.reject('失败')).then(result => {
+  console.log('NOT 结果 (反转失败):', result);
+}).catch(error => {
+  console.log('NOT 错误 (反转失败):', error);
+});
+
+// 测试 MAJORITY 逻辑
+console.log('\n测试 MAJORITY 逻辑:');
+// 测试多数成功的情况
+PromiseLogic.majority([
+  Promise.resolve('成功1'),
+  Promise.resolve('成功2'),
+  Promise.reject('失败3')
+]).then(result => {
+  console.log('MAJORITY 结果 (多数成功):', result);
+}).catch(error => {
+  console.log('MAJORITY 错误 (多数成功):', error.message);
+});
+
+// 测试 ALL_FULFILLED 逻辑
+console.log('\n测试 ALL_FULFILLED 逻辑:');
+PromiseLogic.allFulfilled([
+  Promise.resolve('成功1'),
+  Promise.reject('失败2'),
+  Promise.resolve('成功3')
+]).then(result => {
+  console.log('ALL_FULFILLED 结果:', result);
+});
+
+// 测试 ALL_REJECTED 逻辑
+console.log('\n测试 ALL_REJECTED 逻辑:');
+PromiseLogic.allRejected([
+  Promise.reject('失败1'),
+  Promise.resolve('成功2'),
+  Promise.reject('失败3')
+]).then(result => {
+  console.log('ALL_REJECTED 结果:', result);
+});
+
+console.log('\n测试完成，查看结果...');
+
