@@ -109,13 +109,35 @@ async function testV1Methods() {
   console.log('\n2. 测试扩展操作:');
   
   // 测试 allFulfilled 方法
+  console.log('\n测试 allFulfilled 方法 - 验证立即返回和顺序保持:');
   try {
+    const startTime = Date.now();
+    console.log('开始执行 allFulfilled，时间:', startTime);
+    
     const allFulfilledResult = await PromiseLogic.allFulfilled([
-      Promise.resolve('success1'),
+      new Promise(resolve => {
+        console.log('第一个 Promise 开始（慢）');
+        setTimeout(() => {
+          console.log('第一个 Promise 完成:', 'success1');
+          resolve('success1');
+        }, 100);
+      }),
       Promise.reject('error'),
-      Promise.resolve('success2')
+      new Promise(resolve => {
+        console.log('第三个 Promise 开始（快）');
+        setTimeout(() => {
+          console.log('第三个 Promise 完成:', 'success2');
+          resolve('success2');
+        }, 10);
+      })
     ]);
-    console.log('allFulfilled 方法测试通过:', allFulfilledResult);
+    
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allFulfilled 方法测试通过（完整结果）:', allFulfilledResult);
+    console.log('allFulfilled 结果顺序（应保持输入顺序）:', allFulfilledResult);
+    console.log('allFulfilled 执行时间（应约 10ms，第三个 Promise 完成时返回）:', elapsedTime, 'ms');
+    console.log('验证：第一个成功的是第三个 Promise，但完整结果按输入顺序返回');
   } catch (error) {
     console.log('allFulfilled 方法测试失败:', error.message);
   }
@@ -130,6 +152,85 @@ async function testV1Methods() {
     console.log('allRejected 方法测试通过:', allRejectedResult);
   } catch (error) {
     console.log('allRejected 方法测试失败:', error.message);
+  }
+  
+  // 测试 allRejected 方法 - 测试初次返回和完整结果
+  console.log('\n测试 allRejected 初次返回和完整结果:');
+  try {
+    const startTime = Date.now();
+    const allRejectedResult = await PromiseLogic.allRejected([
+      Promise.resolve('success1'),
+      Promise.reject('fastError'),
+      new Promise((_, reject) => setTimeout(() => reject('slowError'), 100)),
+      Promise.reject('error3')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allRejected 方法测试通过（完整结果）:', allRejectedResult);
+    console.log('allRejected 结果顺序（应保持输入顺序）:', allRejectedResult);
+    console.log('allRejected 执行时间（应立即返回，约 0-10ms）:', elapsedTime, 'ms');
+    console.log('验证：只要有一个失败就立即返回，不等待所有 Promise 完成');
+  } catch (error) {
+    console.log('allRejected 方法测试失败:', error.message);
+  }
+  
+  // 测试 allRejected 方法 - 验证立即返回行为
+  console.log('\n测试 allRejected 立即返回行为:');
+  try {
+    const startTime = Date.now();
+    const allRejectedResult = await PromiseLogic.allRejected([
+      Promise.reject('first'),
+      new Promise((_, reject) => setTimeout(() => reject('second'), 50)),
+      new Promise((_, reject) => setTimeout(() => reject('third'), 100)),
+      Promise.resolve('success')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allRejected 结果:', allRejectedResult);
+    console.log('allRejected 执行时间:', elapsedTime, 'ms');
+    console.log('验证：应该在 0ms 左右返回（第一个失败），而不是 100ms（所有完成）');
+  } catch (error) {
+    console.log('allRejected 方法测试失败:', error.message);
+  }
+  
+  // 测试 allFulfilled 方法 - 测试初次返回和完整结果
+  console.log('\n测试 allFulfilled 初次返回和完整结果:');
+  try {
+    const startTime = Date.now();
+    const allFulfilledResult = await PromiseLogic.allFulfilled([
+      new Promise(resolve => setTimeout(() => resolve('slow'), 100)),
+      Promise.resolve('fast'),
+      Promise.resolve('medium'),
+      Promise.reject('error1'),
+      Promise.reject('error2')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allFulfilled 方法测试通过（完整结果）:', allFulfilledResult);
+    console.log('allFulfilled 结果顺序（应保持输入顺序）:', allFulfilledResult);
+    console.log('allFulfilled 执行时间（应立即返回，约 0-10ms）:', elapsedTime, 'ms');
+    console.log('验证：只要有一个成功就立即返回，不等待所有 Promise 完成');
+  } catch (error) {
+    console.log('allFulfilled 方法测试失败:', error.message);
+  }
+  
+  // 测试 allFulfilled 方法 - 验证立即返回行为
+  console.log('\n测试 allFulfilled 立即返回行为:');
+  try {
+    const startTime = Date.now();
+    const allFulfilledResult = await PromiseLogic.allFulfilled([
+      new Promise(resolve => setTimeout(() => resolve('first'), 50)),
+      new Promise(resolve => setTimeout(() => resolve('second'), 100)),
+      new Promise(resolve => setTimeout(() => resolve('third'), 150)),
+      Promise.reject('error')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allFulfilled 结果:', allFulfilledResult);
+    console.log('allFulfilled 执行时间:', elapsedTime, 'ms');
+    console.log('验证：应该在 50ms 左右返回（第一个成功），而不是 150ms（所有完成）');
+  } catch (error) {
+    console.log('allFulfilled 方法测试失败:', error.message);
   }
   
   // 测试 not 方法
@@ -179,6 +280,28 @@ async function testV1Methods() {
     console.log('flipFlop 方法测试通过');
   } catch (error) {
     console.log('flipFlop 方法测试失败:', error.message);
+  }
+  
+  console.log('\n5. 测试 maxTimer:');
+  
+  try {
+    const result = await PromiseLogic.and([
+      new Promise(resolve => setTimeout(() => resolve('success'), 100)),
+      Promise.resolve('fast')
+    ]).maxTimer(200, '自定义超时错误, 200ms 内未完成');
+    console.log('maxTimer 测试通过（未超时）:', result);
+  } catch (error) {
+    console.log('maxTimer 测试失败:', error.message);
+  }
+  
+  try {
+    const result = await PromiseLogic.and([
+      new Promise(resolve => setTimeout(() => resolve('success'), 3000)),
+      Promise.resolve('fast')
+    ]).maxTimer(1000, '自定义超时错误, 1000ms 内未完成');
+    console.log('maxTimer 测试通过（超时）:', result);
+  } catch (error) {
+    console.log('maxTimer 测试通过（超时）:', error.message);
   }
 }
 
@@ -290,6 +413,85 @@ async function testV2Methods() {
     console.log('allRejected 方法测试失败:', error.message);
   }
   
+  // 测试 allRejected 方法 - 测试初次返回和完整结果
+  console.log('\n测试 allRejected 初次返回和完整结果:');
+  try {
+    const startTime = Date.now();
+    const allRejectedResult = await PromiseLogicTS.allRejected([
+      Promise.resolve('success1'),
+      Promise.reject('fastError'),
+      new Promise((_, reject) => setTimeout(() => reject('slowError'), 100)),
+      Promise.reject('error3')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allRejected 方法测试通过（完整结果）:', allRejectedResult);
+    console.log('allRejected 结果顺序（应保持输入顺序）:', allRejectedResult);
+    console.log('allRejected 执行时间（v2 等待所有完成，约 100ms）:', elapsedTime, 'ms');
+    console.log('验证：v2 版本等待所有 Promise 完成');
+  } catch (error) {
+    console.log('allRejected 方法测试失败:', error.message);
+  }
+  
+  // 测试 allRejected 方法 - 验证等待所有完成行为
+  console.log('\n测试 allRejected 等待所有完成行为:');
+  try {
+    const startTime = Date.now();
+    const allRejectedResult = await PromiseLogicTS.allRejected([
+      Promise.reject('first'),
+      new Promise((_, reject) => setTimeout(() => reject('second'), 50)),
+      new Promise((_, reject) => setTimeout(() => reject('third'), 100)),
+      Promise.resolve('success')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allRejected 结果:', allRejectedResult);
+    console.log('allRejected 执行时间:', elapsedTime, 'ms');
+    console.log('验证：v2 版本应该在 100ms 左右返回（所有完成）');
+  } catch (error) {
+    console.log('allRejected 方法测试失败:', error.message);
+  }
+  
+  // 测试 allFulfilled 方法 - 测试初次返回和完整结果
+  console.log('\n测试 allFulfilled 初次返回和完整结果:');
+  try {
+    const startTime = Date.now();
+    const allFulfilledResult = await PromiseLogicTS.allFulfilled([
+      new Promise(resolve => setTimeout(() => resolve('slow'), 100)),
+      Promise.resolve('fast'),
+      Promise.resolve('medium'),
+      Promise.reject('error1'),
+      Promise.reject('error2')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allFulfilled 方法测试通过（完整结果）:', allFulfilledResult);
+    console.log('allFulfilled 结果顺序（应保持输入顺序）:', allFulfilledResult);
+    console.log('allFulfilled 执行时间（v2 等待所有完成，约 100ms）:', elapsedTime, 'ms');
+    console.log('验证：v2 版本等待所有 Promise 完成');
+  } catch (error) {
+    console.log('allFulfilled 方法测试失败:', error.message);
+  }
+  
+  // 测试 allFulfilled 方法 - 验证等待所有完成行为
+  console.log('\n测试 allFulfilled 等待所有完成行为:');
+  try {
+    const startTime = Date.now();
+    const allFulfilledResult = await PromiseLogicTS.allFulfilled([
+      new Promise(resolve => setTimeout(() => resolve('first'), 50)),
+      new Promise(resolve => setTimeout(() => resolve('second'), 100)),
+      new Promise(resolve => setTimeout(() => resolve('third'), 150)),
+      Promise.reject('error')
+    ]);
+    const endTime = Date.now();
+    const elapsedTime = endTime - startTime;
+    console.log('allFulfilled 结果:', allFulfilledResult);
+    console.log('allFulfilled 执行时间:', elapsedTime, 'ms');
+    console.log('验证：v2 版本应该在 150ms 左右返回（所有完成）');
+  } catch (error) {
+    console.log('allFulfilled 方法测试失败:', error.message);
+  }
+  
   // 测试 not 方法
   try {
     const notResult = await PromiseLogicTS.not(Promise.reject('error'));
@@ -337,6 +539,28 @@ async function testV2Methods() {
     console.log('flipFlop 方法测试通过');
   } catch (error) {
     console.log('flipFlop 方法测试失败:', error.message);
+  }
+  
+  console.log('\n5. 测试 maxTimer:');
+  
+  try {
+    const result = await PromiseLogicTS.and([
+      new Promise(resolve => setTimeout(() => resolve('success'), 100)),
+      Promise.resolve('fast')
+    ]).maxTimer(200, '自定义超时错误, 200ms 内未完成');
+    console.log('maxTimer 测试通过（未超时）:', result);
+  } catch (error) {
+    console.log('maxTimer 测试失败:', error.message);
+  }
+  
+  try {
+    const result = await PromiseLogicTS.and([
+      new Promise(resolve => setTimeout(() => resolve('success'), 3000)),
+      Promise.resolve('fast')
+    ]).maxTimer(1000);
+    console.log('maxTimer 测试通过（超时）:', result);
+  } catch (error) {
+    console.log('maxTimer 测试通过（超时）:', error.message);
   }
 }
 

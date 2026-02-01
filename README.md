@@ -1,7 +1,7 @@
 ### **1. Core Philosophy**
 
 **Replace API Memory with Logical Concepts**  
-The design philosophy of `promise-logic` is: **Developers should focus on business logic, not on the details of Promise APIs**.  
+The design philosophy of `promise-logic` is: **Developers should focus on business logic, not on details of Promise APIs**.  
 Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have naming and semantics that are not intuitive enough, especially in complex asynchronous scenarios where code readability rapidly declines.  
 `promise-logic` abstracts asynchronous combinations into logical operations like `and`, `or`, `xor` through the concept of **Logic Gates**, making code semantically clear and self-explanatory.
 
@@ -10,8 +10,8 @@ Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have na
 ### **2. Features**
 
 1. **Logical Semantics**
-   - `and`: All tasks must succeed (equivalent to `Promise.all`)
-   - `or`: At least one task succeeds (equivalent to `Promise.any`)
+   - `and`: All tasks must succeed (equivalent to native `Promise.all`)
+   - `or`: At least one task succeeds (equivalent to native `Promise.any`)
    - `xor`: **Exactly one task succeeds**
    - `nand`: Not all tasks succeed (at least one fails)
    - `nor`: All tasks fail (no task succeeds)
@@ -32,11 +32,11 @@ Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have na
 5. **Timeout Control**
    - `maxTimer`: Adds timeout functionality to any Promise operation (unit: milliseconds).
 
-maxTimer can only detect timeout of Promise operations, cannot interrupt or cancel Promise operations themselves, this is a JavaScript characteristic.
+`maxTimer` can only detect timeout of Promise operations, cannot interrupt or cancel Promise operations themselves, this is a JavaScript characteristic.
 
 6. **Extended Operations**
-   - `allFulfilled`: Returns all successful results
-   - `allRejected`: Returns all failed results
+   - `allFulfilled`: Returns all successful results. Returns immediately when a result exists, while maintaining input order.
+   - `allRejected`: Returns all failed results. Returns immediately when a result exists, while maintaining input order.
    - `allSettled`: Returns all results (both successful and failed)
 
 ---
@@ -119,18 +119,18 @@ PromiseLogic.majority<Response>(services)
 ```javascript
 import { PromiseLogic } from 'promise-logic';
 
-// Execute operation with timeout
+// Execute operation with custom timeout error message
 PromiseLogic.and([
   Promise.resolve(1),
-  new Promise((resolve) => setTimeout(resolve, 1000)), // 1 second operation
+  new Promise((resolve) => setTimeout(resolve, 3000)), // 3 second operation
   Promise.resolve(3)
 ])
-  .maxTimer(2000) // 2 second timeout
+  .maxTimer(2000, 'Custom timeout error: operation did not complete within 2000ms') // 2 second timeout, custom error message
   .then((result) => {
     console.log('Operation completed within timeout:', result);
   })
   .catch((error) => {
-    console.error('Operation timed out or failed:', error.message);
+    console.error('Operation timed out:', error.message); // Output: Custom timeout error: operation did not complete within 2000ms
   });
 ```
 
@@ -146,12 +146,12 @@ const operations = [
   Promise.reject('error2')
 ];
 
-// Get all successful results
+// Get all successful results (returns immediately when a result exists)
 PromiseLogic.allFulfilled(operations).then((results) => {
   console.log('Successful results:', results); // ['success1', 'success2']
 });
 
-// Get all failed results
+// Get all failed results (returns immediately when a result exists)
 PromiseLogic.allRejected(operations).then((errors) => {
   console.log('Failed results:', errors); // ['error1', 'error2']
 });
@@ -159,8 +159,89 @@ PromiseLogic.allRejected(operations).then((errors) => {
 // Get all results (both success and failure)
 PromiseLogic.allSettled(operations).then((results) => {
   console.log('All results:', results);
+  // Output:
+  // [
+  //   { status: 'fulfilled', value: 'success1' },
+  //   { status: 'rejected', reason: 'error1' },
+  //   { status: 'fulfilled', value: 'success2' },
+  //   { status: 'rejected', reason: 'error2' }
+  // ]
 });
 ```
+
+#### Example: allFulfilled - Execution Timing and Results
+
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const startTime = Date.now();
+console.log('Start executing allFulfilled, time:', startTime);
+
+const allFulfilledResult = await PromiseLogic.allFulfilled([
+  new Promise(resolve => {
+    console.log('First Promise started (slow)');
+    setTimeout(() => {
+      console.log('First Promise completed:', 'success1');
+      resolve('success1');
+    }, 100);
+  }),
+  Promise.reject('error'),
+  new Promise(resolve => {
+    console.log('Third Promise started (fast)');
+    setTimeout(() => {
+      console.log('Third Promise completed:', 'success2');
+      resolve('success2');
+    }, 10);
+  })
+]);
+
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allFulfilled complete results:', allFulfilledResult); // ['success1', 'success2']
+```
+
+**Explanation:**
+- **First return info**: Third Promise completes at 10ms, immediately returns `['success2']`
+- **Complete return info**: First Promise completes at 100ms, final complete result is `['success1', 'success2']`
+- **Execution timing**: Returns immediately when a result exists, does not wait for all Promises to complete
+- **Order preservation**: Complete results are returned in input order, not completion order
+
+#### Example: allRejected - Execution Timing and Results
+
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const startTime = Date.now();
+console.log('Start executing allRejected, time:', startTime);
+
+const allRejectedResult = await PromiseLogic.allRejected([
+  Promise.resolve('success1'),
+  new Promise((_, reject) => {
+    console.log('Second Promise started (fast)');
+    setTimeout(() => {
+      console.log('Second Promise completed:', 'error1');
+      reject('error1');
+    }, 10);
+  }),
+  new Promise((_, reject) => {
+    console.log('Third Promise started (slow)');
+    setTimeout(() => {
+      console.log('Third Promise completed:', 'error2');
+      reject('error2');
+    }, 100);
+  })
+]);
+
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allRejected complete results:', allRejectedResult); // ['error1', 'error2']
+```
+
+**Explanation:**
+- **First return info**: Second Promise completes at 10ms, immediately returns `['error1']`
+- **Complete return info**: Third Promise completes at 100ms, final complete result is `['error1', 'error2']`
+- **Execution timing**: Returns immediately when a result exists, does not wait for all Promises to complete
+- **Order preservation**: Complete results are returned in input order, not completion order
 
 #### Example: Custom majority threshold
 
@@ -187,9 +268,17 @@ PromiseLogic.majority(services, { max: 0.4 })
 
 ## Recent Updates
 
+### v2.8.0
+
+- **Performance optimization**: Optimized `allFulfilled` and `allRejected` implementation logic from the bottom layer, existing results return immediately while maintaining consistent input and output order
+- **Added chain timeout control with custom error messages**: Can customize timeout error messages in the `maxTimer` method
+- **Type fixes**: Fixed TypeScript version type declaration issues
+- **Test completion**: Added complete test cases for `allFulfilled`, `allRejected`, and `maxTimer`
+- **Code refactoring**: Improved code structure for better maintainability
+
 ### v2.7.0
 
-- **Added Modular Architecture**: Separated logic gate implementations into independent modules for better code maintainability
+- **Added modular architecture**: Separated logic gate implementations into independent modules for better code maintainability
 - **Fixed NOT Logic Gate**: Fixed potential risks in NOT logic gate in production environments
 - **Improved Error Messages**: Enhanced error message format for clearer error details
 - **Enhanced Test Coverage**: Added complete factory function tests for v1 and v2 versions
@@ -242,19 +331,19 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 | API            | Description                                                                                                                         |
 | :------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| `and`          | All Promises succeed, returns result array; any failure causes overall failure.                                                                        |
-| `or`           | At least one Promise succeeds, returns first success result; all failures cause overall failure.                                                                |
+| `and`          | All Promises succeed, returns result array; any failure causes overall failure. Equivalent to native `Promise.all`.                                                                        |
+| `or`           | At least one Promise succeeds, returns first success result; all failures cause overall failure. Equivalent to native `Promise.any`.                                                                |
 | `xor`          | **Exactly one Promise succeeds**, returns that result; otherwise throws `XOR_ERROR`.                                                            |
 | `nand`         | Not all Promises succeed (at least one fails), returns success result array; all succeed causes overall failure.                                              |
 | `nor`          | All Promises fail (no task succeeds), returns empty array; any success causes overall failure.                                                        |
 | `xnor`         | All Promises succeed or all fail (same state), returns success result array; otherwise throws `XNOR_ERROR`.                                           |
 | `not`          | Inverts the result of a single Promise: success becomes failure, failure becomes success.                                                                            |
 | `majority`     | More than specified threshold of Promises succeed, returns success result array; otherwise overall failure. Accepts `options` parameter, where `max` property can customize threshold (default: 0.5), range: (0, 1). |
-| `allFulfilled` | Returns all successful results as an array, ignoring failures.                                                                                     |
-| `allRejected`  | Returns all failed results as an array, ignoring successes.                                                                                     |
-| `allSettled`   | Returns all results (both successful and failed) as an array.                                                                                     |
-| `race`         | Returns the first completed Promise result (regardless of success or failure).                                                                            |
-| `maxTimer`     | Adds timeout functionality to any Promise operation (unit: milliseconds).                                                                              |
+| `allFulfilled` | Returns all successful results as an array, ignoring failures. Returns immediately when a result exists, while maintaining input order.                     |
+| `allRejected`  | Returns all failed results as an array, ignoring successes. Returns immediately when a result exists, while maintaining input order.                     |
+| `allSettled`   | Returns all results (both successful and failed) as an array. Equivalent to native `Promise.allSettled`.                                                                                     |
+| `race`         | Returns the first completed Promise result (regardless of success or failure). Equivalent to native `Promise.race`.                                                                            |
+| `maxTimer`     | Adds timeout functionality to any Promise operation (unit: milliseconds). Supports custom timeout error messages.                                              |
 
 ## **Note**: `maxTimer` can only detect timeout of Promise operations, cannot interrupt or cancel Promise operations themselves, this is a JavaScript characteristic.
 
@@ -262,13 +351,35 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 1. **Primary/Backup Service Calls**
    - Use `xor` to ensure **exactly one service responds**, avoiding duplicate processing.
+
 2. **Distributed Decision Making**
    - Use `majority` to implement majority consensus (e.g., distributed voting).
+
 3. **Resource Competition**
    - Use `or` to get the first available resource (e.g., CDN node selection).
    - Use `not` to check if a resource is available.
+
 4. **Full-link Validation**
    - Use `and` to ensure all dependent services succeed (e.g., order creation).
+
+5. **Timeout Control**
+   - Use `maxTimer` to add timeout functionality to any Promise operation (unit: milliseconds).
+   - Returns custom error message after timeout, default: `Promise timed out after ${ms} ms`.
+
+6. **Partial Success Handling**
+   - Use `allFulfilled` to execute all Promises concurrently and return successful result array (e.g., batch API calls, suitable for high concurrency and partial failure acceptance scenarios).
+   - Use `allRejected` to execute all Promises concurrently and return failed result array (e.g., error log collection, suitable for batch failure processing scenarios).
+
+7. **Full Result Retrieval**
+   - Use `allSettled` to get results from all Promises (regardless of success or failure).
+
+8. **Fast Response**
+   - Use `race` to return the first completed Promise result (regardless of success or failure).
+
+9. **State Validation**
+   - Use `nand` to verify that not all Promises succeed (at least one fails).
+   - Use `nor` to verify that all Promises fail (no task succeeds).
+   - Use `xnor` to verify that all Promises succeed or all fail (same state).
 
 ---
 
@@ -276,7 +387,7 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 1. **Development Environment**
    ```bash
-   git clone https://github.com/haowhite/promise-logic.git
+   git clone https://github.com/xier123456/promise-logic.git
    cd promise-logic
    npm install
    ```

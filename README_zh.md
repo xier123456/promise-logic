@@ -32,11 +32,11 @@
 5. **超时控制**
    - `maxTimer`：为任何 Promise 操作添加超时功能（单位：毫秒）。
 
-maxTimer只能侦听Promise操作的超时，不能中断和取消Promise操作本身，这是javascript的特性。
+maxTimer只能侦听Promise操作的超时并返回错误，不能中断和取消Promise操作本身。
 
 6. **扩展操作**
-   - `allFulfilled`：返回所有成功结果
-   - `allRejected`：返回所有失败结果
+   - `allFulfilled`：按顺序返回所有成功结果，当存在成功结果时会立即尝试返回
+   - `allRejected`：按顺序返回所有失败结果，当存在失败结果时会立即尝试返回
    - `allSettled`：返回所有结果（包括成功和失败）
 
 ---
@@ -117,21 +117,22 @@ PromiseLogic.majority<Response>(services)
 
 #### 示例：超时控制
 
+
 ```javascript
 import { PromiseLogic } from 'promise-logic';
 
-// 执行带超时的操作
+// 执行带自定义超时错误信息的操作
 PromiseLogic.and([
   Promise.resolve(1),
-  new Promise((resolve) => setTimeout(resolve, 1000)), // 1秒操作
+  new Promise((resolve) => setTimeout(resolve, 3000)), // 3秒操作
   Promise.resolve(3)
 ])
-  .maxTimer(2000) // 2秒超时
+  .maxTimer(2000, '自定义超时错误：操作在 2000ms 内未完成') // 2秒超时，自定义错误信息
   .then((result) => {
     console.log('操作在超时时间内完成:', result);
   })
   .catch((error) => {
-    console.error('操作超时或失败:', error.message);
+    console.error('操作超时:', error.message); // 输出: 自定义超时错误：操作在 2000ms 内未完成
   });
 ```
 
@@ -147,12 +148,13 @@ const operations = [
   Promise.reject('error2')
 ];
 
-// 获取所有成功结果
+// 获取所有成功结果（一有成功就立即返回）
 PromiseLogic.allFulfilled(operations).then((results) => {
   console.log('成功结果:', results); // ['success1', 'success2']
+
 });
 
-// 获取所有失败结果
+// 获取所有失败结果（一有失败就立即返回）
 PromiseLogic.allRejected(operations).then((errors) => {
   console.log('失败结果:', errors); // ['error1', 'error2']
 });
@@ -160,8 +162,91 @@ PromiseLogic.allRejected(operations).then((errors) => {
 // 获取所有结果（包括成功和失败）
 PromiseLogic.allSettled(operations).then((results) => {
   console.log('所有结果:', results);
+  // 输出：
+  // [
+  //   { status: 'fulfilled', value: 'success1' },
+  //   { status: 'rejected', reason: 'error1' },
+  //   { status: 'fulfilled', value: 'success2' },
+  //   { status: 'rejected', reason: 'error2' }
+  // ]
 });
+
 ```
+
+
+#### 示例：allFulfilled - 执行时机和结果
+
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const startTime = Date.now();
+console.log('开始执行 allFulfilled，时间:', startTime);
+
+const allFulfilledResult = await PromiseLogic.allFulfilled([
+  new Promise(resolve => {
+    console.log('第一个 Promise 开始（慢）');
+    setTimeout(() => {
+      console.log('第一个 Promise 完成:', 'success1');
+      resolve('success1');
+    }, 100);
+  }),
+  Promise.reject('error'),
+  new Promise(resolve => {
+    console.log('第三个 Promise 开始（快）');
+    setTimeout(() => {
+      console.log('第三个 Promise 完成:', 'success2');
+      resolve('success2');
+    }, 10);
+  })
+]);
+
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allFulfilled 完整结果:', allFulfilledResult); // ['success1', 'success2']
+```
+
+**说明：**
+- **第一个返回信息**：第三个 Promise 在 10ms 时完成，立即返回 `['success2']`
+- **完整返回信息**：第一个 Promise 在 100ms 时完成，最终完整结果为 `['success1', 'success2']`
+- **执行时机**：一有成功就立即返回，不等待所有 Promise 完成
+- **顺序保持**：完整结果按输入顺序返回，而不是按完成顺序
+
+#### 示例：allRejected - 执行时机和结果
+
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const startTime = Date.now();
+console.log('开始执行 allRejected，时间:', startTime);
+
+const allRejectedResult = await PromiseLogic.allRejected([
+  Promise.resolve('success1'),
+  new Promise((_, reject) => {
+    console.log('第二个 Promise 开始（快）');
+    setTimeout(() => {
+      console.log('第二个 Promise 完成:', 'error1');
+      reject('error1');
+    }, 10);
+  }),
+  new Promise((_, reject) => {
+    console.log('第三个 Promise 开始（慢）');
+    setTimeout(() => {
+      console.log('第三个 Promise 完成:', 'error2');
+      reject('error2');
+    }, 100);
+  })
+]);
+
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allRejected 完整结果:', allRejectedResult); // ['error1', 'error2']
+```
+
+**说明：**
+- **第一个返回信息**：第二个 Promise 在 10ms 时完成，立即返回 `['error1']`
+- **完整返回信息**：第三个 Promise 在 100ms 时完成，最终完整结果为 `['error1', 'error2']`
+- **执行时机**：一有失败就立即返回，不等待所有 Promise 完成
+- **顺序保持**：完整结果按输入顺序返回，而不是按完成顺序
 
 #### 示例：自定义 majority 阈值
 
@@ -187,6 +272,15 @@ PromiseLogic.majority(services, { max: 0.4 })
 ```
 
 ## 最近更新
+
+### v2.8.0
+
+- **性能优化**：从底层优化 `allFulfilled` 和 `allRejected` 实现逻辑，存在结果便立即返回，同时保持输入和输出顺序一致
+- **新增链式超时控制自定义错误信息**：可以在 `maxTimer` 方法中自定义超时错误信息
+- **类型修复**：修复 TypeScript 版本的类型声明问题
+- **测试完善**：添加 `allFulfilled`、`allRejected` 和 `maxTimer` 完整测试用例
+- **代码重构**：改进代码结构，提高可维护性
+
 
 ### v2.7.0
 
@@ -243,33 +337,56 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 | API            | 说明                                                                                                                         |
 | :------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| `and`          | 所有 Promise 成功，返回结果数组；任一失败则整体失败。                                                                        |
-| `or`           | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败。                                                                |
+| `and`          | 所有 Promise 成功，返回结果数组；任一失败则整体失败，等价原生 `Promise.all`。                                                                        |
+| `or`           | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败，等价原生 `Promise.any`。                                                                |
 | `xor`          | **有且仅有一个 Promise 成功**，返回该结果；否则抛出 `XOR_ERROR`。                                                            |
 | `nand`         | 不是所有 Promise 都成功（至少一个失败），返回成功结果数组；全部成功则整体失败。                                              |
 | `nor`          | 所有 Promise 都失败（没有任务成功），返回空数组；任一成功则整体失败。                                                        |
 | `xnor`         | 所有 Promise 都成功或都失败（状态相同），返回成功结果数组；否则抛出 `XNOR_ERROR`。                                           |
 | `not`          | 反转单个 Promise 的结果：成功变失败，失败变成功。                                                                            |
 | `majority`     | 超过指定阈值的 Promise 成功，返回成功结果数组；否则整体失败。接受 `options` 参数，其中 `max` 属性可自定义阈值（默认：0.5），范围：(0, 1)。 |
-| `allFulfilled` | 返回所有成功结果作为数组，忽略失败结果。                                                                                     |
-| `allRejected`  | 返回所有失败结果作为数组，忽略成功结果。                                                                                     |
-| `allSettled`   | 返回所有结果（包括成功和失败）作为数组。                                                                                     |
-| `race`         | 返回第一个完成的 Promise 结果（无论成功或失败）。                                                                            |
-| `maxTimer`     | 为任何 Promise 操作添加超时功能（单位：毫秒）。                                                                              |
+| `allFulfilled` | 返回所有成功结果作为数组，忽略失败结果。存在成功结果立即返回，同时保持输入输出顺序一致。                   |
+| `allRejected`  | 返回所有失败结果作为数组，忽略成功结果。存在失败结果立即返回，同时保持输入输出顺序一致。                 |
+| `allSettled`   | 返回所有结果（包括成功和失败）作为数组，等价原生 `Promise.allSettled`）。                                                                                     |
+| `race`         | 返回第一个完成的 Promise 结果（无论成功或失败），等价原生 `Promise.race`。                                                                            |
+| `maxTimer`     | 为任何 Promise 操作添加超时功能（单位：毫秒）。支持自定义超时错误信息。                                              |
 
-## **注意**：`maxTimer` 只能侦听 Promise 操作的超时，不能中断和取消 Promise 操作本身，这是 JavaScript 的特性。
+## **注意**：`maxTimer` 只能侦听 Promise 操作的超时并返回错误，不能中断和取消 Promise 操作本身。
 
 ### **6. 实际应用场景**
 
 1. **主备服务调用**
    - 使用 `xor` 确保**有且仅有一个服务响应**，避免重复处理。
+
 2. **分布式决策**
    - 使用 `majority` 实现多数决共识（如分布式投票）。
+
 3. **资源竞争**
    - 使用 `or` 获取首个可用资源（如 CDN 节点选择）。
    - 使用 `not` 检查资源是否可用。
+
 4. **全链路校验**
    - 使用 `and` 确保所有依赖服务均成功（如订单创建）。
+
+5. **超时控制**
+   - 使用 `maxTimer` 为任何 Promise 操作添加超时功能（单位：毫秒），超时后返回自定义错误信息。默认：`Promise timed out after ${ms} ms`。
+
+6. **部分成功处理**
+   - 使用 `allFulfilled` 并发执行所有 Promise，返回成功结果数组（如批量 API 调用，适用于高并发、部分失败可接受的场景）。
+   - 使用 `allRejected` 并发执行所有 Promise，返回失败结果数组（如错误日志收集，适用于批量处理失败场景）。
+
+7. **全量结果获取**
+   - 使用 `allSettled` 获取所有 Promise 的结果（无论成功或失败）。
+
+8. **快速响应**
+   - 使用 `race` 返回第一个完成的 Promise 结果（无论成功或失败）。
+
+9. **状态验证**
+   - 使用 `nand` 验证不是所有 Promise 都成功（至少一个失败）。
+   - 使用 `nor` 验证所有 Promise 都失败（没有任务成功）。
+   - 使用 `xnor` 验证所有 Promise 都成功或都失败（状态相同）。
+
+
 
 ---
 
@@ -277,7 +394,7 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 1. **开发环境**
    ```bash
-   git clone https://github.com/haowhite/promise-logic.git
+   git clone https://github.com/xier123456/promise-logic.git
    cd promise-logic
    npm install
    ```

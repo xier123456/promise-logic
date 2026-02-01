@@ -5,6 +5,8 @@ import { NandGate } from '../gates/v2/nand';
 import { NorGate } from '../gates/v2/nor';
 import { XnorGate } from '../gates/v2/xnor';
 import { XorGate } from '../gates/v2/xor';
+import { allFulfilled } from '../gates/v2/allFulfilled';
+import { allRejected } from '../gates/v2/allRejected';
 
 // 包装定时器
 export class PromiseWithTimer<T> {
@@ -15,13 +17,13 @@ export class PromiseWithTimer<T> {
   }
 
   // 添加超时功能
-  maxTimer(ms: number): Promise<T> {
+  maxTimer(ms: number, errorMessage = `Promise timed out after ${ms}ms`): Promise<T> {
     let timerId: NodeJS.Timeout;
     const promiseTime = Promise.race([
       this.promise,
       new Promise<never>((_, reject) => {
         timerId = setTimeout(() => {
-          reject(new Error(`Promise timed out after ${ms}ms,${this.promise}`));
+          reject(new Error(errorMessage));
         }, ms);
       })
     ]);
@@ -71,7 +73,9 @@ export class PromiseLogic {
       nand: new NandGate(),
       nor: new NorGate(),
       xnor: new XnorGate(),
-      majority: new MajorityGate()
+      majority: new MajorityGate(),
+      allFulfilled: new allFulfilled(),
+      allRejected: new allRejected(),
     };
   }
 
@@ -114,29 +118,13 @@ export class PromiseLogic {
   static allFulfilled(
     iterable: Iterable<PromiseLike<unknown>>
   ): PromiseWithTimer<unknown[]> {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        return fulfilled.map((result) => result.value);
-      })
-    );
+    return new PromiseWithTimer(this.gates.allFulfilled.execute(iterable));
   }
 
   static allRejected<T>(
     iterable: Iterable<T | PromiseLike<T>>
   ): PromiseWithTimer<unknown[]> {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        return results
-          .filter(
-            (result): result is PromiseRejectedResult =>
-              result.status === 'rejected'
-          )
-          .map((result) => result.reason);
-      })
-    );
+    return new PromiseWithTimer(this.gates.allRejected.execute(iterable));
   }
 
   // NOT logic - Inverts promise resolution

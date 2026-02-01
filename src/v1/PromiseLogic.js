@@ -5,19 +5,21 @@ import { NandGate } from '../gates/v1/nand.js';
 import { NorGate } from '../gates/v1/nor.js';
 import { XnorGate } from '../gates/v1/xnor.js';
 import { MajorityGate } from '../gates/v1/majority.js';
+import { allFulfilled } from '../gates/v1/allFulfilled.js';
+import { allRejected } from '../gates/v1/allRejected.js';
 
 export class PromiseWithTimer {
   constructor(promise) {
     this.promise = promise;
   }
 
-  maxTimer(ms) {
+  maxTimer(ms, errorMessage = `Promise timed out after ${ms}ms`) {
     let timerId;
     const promiseTime = Promise.race([
       this.promise,
       new Promise((_, reject) => {
         timerId = setTimeout(() => {
-          reject(new Error(`Promise timed out after ${ms}ms`));
+          reject(new Error(errorMessage));
         }, ms);
       })
     ]);
@@ -50,7 +52,9 @@ export class PromiseLogic {
       nand: new NandGate(),
       nor: new NorGate(),
       xnor: new XnorGate(),
-      majority: new MajorityGate()
+      majority: new MajorityGate(),
+      allFulfilled: new allFulfilled(),
+      allRejected: new allRejected(),
     };
   }
 
@@ -102,25 +106,11 @@ export class PromiseLogic {
   }
 
   static allFulfilled(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        return fulfilled.map((result) => result.value);
-      })
-    );
+    return new PromiseWithTimer(this.gates.allFulfilled.execute(iterable));
   }
 
   static allRejected(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const rejected = results.filter(
-          (result) => result.status === 'rejected'
-        );
-        return rejected.map((result) => result.reason);
-      })
-    );
+    return new PromiseWithTimer(this.gates.allRejected.execute(iterable));
   }
 
   static createFlipFlop(initialState = false) {
