@@ -53,8 +53,7 @@ const sidebarItems: DocsSidebarItem[] = [
     href: '/docs/utility-methods',
     items: [
       { title: 'race', href: '/docs/utility-methods/race', description: 'Return the first Promise to settle' },
-      { title: 'allSettled', href: '/docs/utility-methods/allSettled', description: 'Wait for all Promises to settle' },
-      { title: 'createFlipFlop', href: '/docs/utility-methods/create-flip-flop', description: 'Create a state flip-flop' }
+      { title: 'allSettled', href: '/docs/utility-methods/allSettled', description: 'Wait for all Promises to settle' }
     ]
   },
   {

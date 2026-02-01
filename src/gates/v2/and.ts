@@ -1,4 +1,4 @@
-import { PromiseLogicError } from '../utils/v2/errors';
+import { createLogicError, PromiseLogicError } from '../../utils/v2/errors';
 import { BaseGate } from './BaseGate';
 
 export class AndGate extends BaseGate {
@@ -8,7 +8,7 @@ export class AndGate extends BaseGate {
 
       
     } catch (error) {
-      throw new PromiseLogicError('AND_ERROR', 'AND gate failed', [error as PromiseSettledResult<Error>])
+      throw createLogicError('AND_ERROR', 0, 0, [], [error as PromiseSettledResult<Error>]);
       
     }
   }

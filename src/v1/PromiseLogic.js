@@ -1,11 +1,16 @@
-import { createLogicError } from '../utils/v1/errors.js';
+import { AndGate } from '../gates/v1/and.js';
+import { OrGate } from '../gates/v1/or.js';
+import { XorGate } from '../gates/v1/xor.js';
+import { NandGate } from '../gates/v1/nand.js';
+import { NorGate } from '../gates/v1/nor.js';
+import { XnorGate } from '../gates/v1/xnor.js';
+import { MajorityGate } from '../gates/v1/majority.js';
 
 export class PromiseWithTimer {
   constructor(promise) {
     this.promise = promise;
   }
 
-  // 实现 maxTimer 方法
   maxTimer(ms) {
     let timerId;
     const promiseTime = Promise.race([
@@ -19,49 +24,57 @@ export class PromiseWithTimer {
     return promiseTime.finally(() => clearTimeout(timerId));
   }
 
-  // 实现 then 方法
   then(onfulfilled, onrejected) {
     return new PromiseWithTimer(this.promise.then(onfulfilled, onrejected));
   }
 
-  // 实现 catch 方法
   catch(onrejected) {
     return new PromiseWithTimer(this.promise.catch(onrejected));
   }
 
-  // 实现 finally 方法
   finally(onfinally) {
     return new PromiseWithTimer(this.promise.finally(onfinally));
   }
 
-  // 实现 toPromise 方法
   toPromise() {
     return this.promise;
   }
 }
 
 export class PromiseLogic {
+  static get gates() {
+    return {
+      and: new AndGate(),
+      or: new OrGate(),
+      xor: new XorGate(),
+      nand: new NandGate(),
+      nor: new NorGate(),
+      xnor: new XnorGate(),
+      majority: new MajorityGate()
+    };
+  }
+
   static and(iterable) {
-    return new PromiseWithTimer(Promise.all(iterable));
+    return new PromiseWithTimer(this.gates.and.execute(iterable));
   }
 
   static or(iterable) {
-    return new PromiseWithTimer(Promise.any(iterable));
+    return new PromiseWithTimer(this.gates.or.execute(iterable));
   }
 
   static not(promise) {
     return new PromiseWithTimer(
-      Promise.resolve(promise)
-        .then(
-          (value) => Promise.reject(value),
-          (reason) => Promise.resolve(reason)
-        )
-        .catch((error) => Promise.resolve(error))
+      Promise.resolve(promise).then(
+        (value) => Promise.reject(new Error(`NOT: ${value}`)),
+        (reason) => Promise.resolve(reason)
+      )
     );
   }
 
   static race(iterable) {
-    return new PromiseWithTimer(Promise.race(iterable));
+    return new PromiseWithTimer(
+      Promise.race(iterable).then((value) => Promise.resolve(value))
+    );
   }
 
   static allSettled(iterable) {
@@ -69,112 +82,25 @@ export class PromiseLogic {
   }
 
   static xor(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        const fulfilledCount = fulfilled.length;
-        const total = results.length;
-
-        if (fulfilledCount === 1) {
-          // 恰好一个成功，返回成功的值
-          return fulfilled[0].value;
-        } else {
-          // 0个或多个（>1）成功，抛出XOR_ERROR
-          throw createLogicError('XOR_ERROR', fulfilledCount, total, results);
-        }
-      })
-    );
+    return new PromiseWithTimer(this.gates.xor.execute(iterable));
   }
 
   static nand(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        const fulfilledCount = fulfilled.length;
-        const total = results.length;
-
-        if (fulfilledCount === total) {
-          // 全部成功，抛出NAND_ERROR
-          throw createLogicError('NAND_ERROR', fulfilledCount, total, results);
-        } else {
-          // 不是所有都成功，返回成功的值数组
-          return fulfilled.map((result) => result.value);
-        }
-      })
-    );
+    return new PromiseWithTimer(this.gates.nand.execute(iterable));
   }
 
   static nor(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        const fulfilledCount = fulfilled.length;
-        const total = results.length;
-
-        if (fulfilledCount === 0) {
-          // 全部失败，返回空数组表示成功
-          return [];
-        } else {
-          // 任意成功，抛出NOR_ERROR
-          throw createLogicError('NOR_ERROR', fulfilledCount, total, results);
-        }
-      })
-    );
+    return new PromiseWithTimer(this.gates.nor.execute(iterable));
   }
 
   static xnor(iterable) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        const fulfilledCount = fulfilled.length;
-        const total = results.length;
-
-        if (fulfilledCount === 0 || fulfilledCount === total) {
-          // 全部成功或全部失败，返回成功的值数组
-          return fulfilled.map((result) => result.value);
-        } else {
-          // 部分成功部分失败，抛出XNOR_ERROR
-          throw createLogicError('XNOR_ERROR', fulfilledCount, total, results);
-        }
-      })
-    );
+    return new PromiseWithTimer(this.gates.xnor.execute(iterable));
   }
 
   static majority(iterable, options = { max: 0.5 }) {
-    return new PromiseWithTimer(
-      Promise.allSettled(iterable).then((results) => {
-        const fulfilled = results.filter(
-          (result) => result.status === 'fulfilled'
-        );
-        const fulfilledCount = fulfilled.length;
-        const total = results.length;
-
-        //多数逻辑：成功数 > 失败数
-        if (fulfilledCount > total * options.max) {
-          // 超过半数成功，返回成功的值数组
-          return fulfilled.map((result) => result.value);
-        } else {
-          // 未达到多数，抛出MAJORITY_ERROR
-          throw createLogicError(
-            'MAJORITY_ERROR',
-            fulfilledCount,
-            total,
-            results
-          );
-        }
-      })
-    );
+    return new PromiseWithTimer(this.gates.majority.execute(iterable, options));
   }
 
-  // 返回所有成功的Promise结果
   static allFulfilled(iterable) {
     return new PromiseWithTimer(
       Promise.allSettled(iterable).then((results) => {
@@ -186,7 +112,6 @@ export class PromiseLogic {
     );
   }
 
-  // 返回所有失败的Promise结果
   static allRejected(iterable) {
     return new PromiseWithTimer(
       Promise.allSettled(iterable).then((results) => {
@@ -198,19 +123,16 @@ export class PromiseLogic {
     );
   }
 
-  //测试中...
   static createFlipFlop(initialState = false) {
     let state = initialState;
     let resolveCurrent = null;
     let currentPromise = Promise.resolve(state);
 
     return {
-      // 获取当前状态
       getState() {
         return state;
       },
 
-      // 异步设置状态
       set(newState) {
         state = newState;
         if (resolveCurrent) {
@@ -221,12 +143,10 @@ export class PromiseLogic {
         return this;
       },
 
-      // 切换状态
       toggle() {
         return this.set(!state);
       },
 
-      // 等待状态变化
       waitForChange() {
         if (!resolveCurrent) {
           currentPromise = new Promise((resolve) => {
@@ -236,7 +156,6 @@ export class PromiseLogic {
         return currentPromise;
       },
 
-      // 等待特定状态
       waitFor(targetState) {
         if (state === targetState) {
           return Promise.resolve(state);

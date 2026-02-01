@@ -1,6 +1,6 @@
 {
   "name": "promise-logic",
-  "version": "2.6.5",
+  "version": "2.7.0",
   "description": "Compose promises with logic gate semantics (AND, OR, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.",
   "type": "module",
   "main": "dist/index.cjs.js",
@@ -11,11 +11,6 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs.js",
       "types": "./dist/types/index.d.ts"
-    },
-    "./factory": {
-      "import": "./dist/factory.esm.js",
-      "require": "./dist/factory.cjs.js",
-      "types": "./dist/types/factory.d.ts"
     },
     "./typescript": {
       "import": "./dist/v2/index.esm.js",

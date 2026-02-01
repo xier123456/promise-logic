@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
 
       <body className="font-sans antialiased bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
         <ThemeProvider
@@ -30,11 +30,12 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="promise-logic-theme"
         >
-        <Layout>
-          {children}
-        </Layout>
-      </ThemeProvider>
+            <Layout>
+              {children}
+            </Layout>
+        </ThemeProvider>
     </body>
     </html >
   );

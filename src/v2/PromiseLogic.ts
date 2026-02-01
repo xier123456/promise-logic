@@ -1,10 +1,10 @@
-import { OrGate } from '../gates/or';
-import { AndGate } from '../gates/and';
-import { MajorityGate } from '../gates/majority';
-import { NandGate } from '../gates/nand';
-import { NorGate } from '../gates/nor';
-import { XnorGate } from '../gates/xnor';
-import { XorGate } from '../gates/xor';
+import { OrGate } from '../gates/v2/or';
+import { AndGate } from '../gates/v2/and';
+import { MajorityGate } from '../gates/v2/majority';
+import { NandGate } from '../gates/v2/nand';
+import { NorGate } from '../gates/v2/nor';
+import { XnorGate } from '../gates/v2/xnor';
+import { XorGate } from '../gates/v2/xor';
 
 // 包装定时器
 export class PromiseWithTimer<T> {
@@ -17,13 +17,12 @@ export class PromiseWithTimer<T> {
   // 添加超时功能
   maxTimer(ms: number): Promise<T> {
     let timerId: NodeJS.Timeout;
-   const promiseTime = Promise.race([
+    const promiseTime = Promise.race([
       this.promise,
       new Promise<never>((_, reject) => {
-       timerId = setTimeout(() => {
-           reject(new Error(`Promise timed out after ${ms}ms,${this.promise}`));
+        timerId = setTimeout(() => {
+          reject(new Error(`Promise timed out after ${ms}ms,${this.promise}`));
         }, ms);
- 
       })
     ]);
     return promiseTime.finally(() => clearTimeout(timerId));
@@ -45,9 +44,7 @@ export class PromiseWithTimer<T> {
   }
 
   // 实现 finally 方法
-  finally(
-    onfinally?: (() => void) | null
-  ): PromiseWithTimer<T> {
+  finally(onfinally?: (() => void) | null): PromiseWithTimer<T> {
     return new PromiseWithTimer(this.promise.finally(onfinally));
   }
 
@@ -90,7 +87,9 @@ export class PromiseLogic {
     return new PromiseWithTimer(this.gates.xor.execute(iterable));
   }
 
-  static nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+  static nand<T>(
+    iterable: Iterable<T | PromiseLike<T>>
+  ): PromiseWithTimer<T[]> {
     return new PromiseWithTimer(this.gates.nand.execute(iterable));
   }
 
@@ -98,11 +97,16 @@ export class PromiseLogic {
     return new PromiseWithTimer(this.gates.nor.execute(iterable));
   }
 
-  static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]> {
+  static xnor<T>(
+    iterable: Iterable<T | PromiseLike<T>>
+  ): PromiseWithTimer<T[]> {
     return new PromiseWithTimer(this.gates.xnor.execute(iterable));
   }
 
-  static majority<T>(iterable: Iterable<T | PromiseLike<T>>, options: { max: number } = { max: 0.5 }): PromiseWithTimer<T[]> {
+  static majority<T>(
+    iterable: Iterable<T | PromiseLike<T>>,
+    options: { max: number } = { max: 0.5 }
+  ): PromiseWithTimer<T[]> {
     return new PromiseWithTimer(this.gates.majority.execute(iterable, options));
   }
 
@@ -110,33 +114,39 @@ export class PromiseLogic {
   static allFulfilled(
     iterable: Iterable<PromiseLike<unknown>>
   ): PromiseWithTimer<unknown[]> {
-    return new PromiseWithTimer(Promise.allSettled(iterable).then((results) => {
-      const fulfilled = results.filter(
-        (result) => result.status === 'fulfilled'
-      );
-      return fulfilled.map((result) => result.value);
-    }));
+    return new PromiseWithTimer(
+      Promise.allSettled(iterable).then((results) => {
+        const fulfilled = results.filter(
+          (result) => result.status === 'fulfilled'
+        );
+        return fulfilled.map((result) => result.value);
+      })
+    );
   }
 
   static allRejected<T>(
     iterable: Iterable<T | PromiseLike<T>>
   ): PromiseWithTimer<unknown[]> {
-    return new PromiseWithTimer(Promise.allSettled(iterable).then((results) => {
-      return results
-        .filter(
-          (result): result is PromiseRejectedResult =>
-            result.status === 'rejected'
-        )
-        .map((result) => result.reason);
-    }));
+    return new PromiseWithTimer(
+      Promise.allSettled(iterable).then((results) => {
+        return results
+          .filter(
+            (result): result is PromiseRejectedResult =>
+              result.status === 'rejected'
+          )
+          .map((result) => result.reason);
+      })
+    );
   }
 
   // NOT logic - Inverts promise resolution
   static not<T>(promise: PromiseLike<T>): PromiseWithTimer<unknown> {
-    return new PromiseWithTimer(Promise.resolve(promise).then(
-      (value) => Promise.reject(value),
-      (reason) => Promise.resolve(reason)
-    ));
+    return new PromiseWithTimer(
+      Promise.resolve(promise).then(
+        (value) => Promise.reject(new Error(`NOT: ${value}`)),
+        (reason) => Promise.resolve(reason)
+      )
+    );
   }
 
   // Utility Methods

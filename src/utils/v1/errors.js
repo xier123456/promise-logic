@@ -14,7 +14,7 @@ export class PromiseLogicError extends Error {
 //fulfilledCount:已完成的Promise数量
 //total:总Promise数量
 //results:PromiseSettledResult数组，包含所有Promise的状态和值/原因
-export function createLogicError(type, fulfilledCount, total, results) {
+export function createLogicError(type, fulfilledCount,total, results,errorArr) {
   const messages = {
     XOR_ERROR: `XOR condition failed: expected exactly 1 promise to fulfill, but ${fulfilledCount} fulfilled.`,
     NAND_ERROR: `NAND condition failed: all ${total} promises fulfilled (expected at least one rejection).`,
@@ -25,5 +25,14 @@ export function createLogicError(type, fulfilledCount, total, results) {
     ALL_FAILED_ERROR: `All failed condition failed: ${total - fulfilledCount}/${total} promises rejected (expected all to fail).`
   };
   
-  return new PromiseLogicError(type, messages[type] || 'Logic condition failed', results);
+  const baseMessage = messages[type];
+  const errorDetails = errorArr.length > 0 
+    ? `\n失败原因：${errorArr.map((err, index) => `[${index + 1}] ${err}`).join('\n')}` 
+    : '';
+  
+  return new PromiseLogicError(
+    type, 
+    baseMessage + errorDetails, 
+    results
+  );
 }

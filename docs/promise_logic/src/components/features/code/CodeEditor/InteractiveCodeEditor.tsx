@@ -1,7 +1,7 @@
 // InteractiveCodeEditor.tsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Editor, { Monaco } from '@monaco-editor/react'
 import { InteractiveCodeEditorProps, EditorOutput } from '@/lib/types/editor'
 import { EDITOR_DEFAULT_OPTIONS } from '@/lib/constants/editor'
@@ -99,6 +99,8 @@ export function InteractiveCodeEditor({
 
   const { theme } = useTheme()
 
+  
+
   return (
     <div className={cn('flex flex-col', className)}>
       {/* 代码编辑器部分 */}
@@ -148,7 +150,7 @@ export function InteractiveCodeEditor({
               hideCursorInOverviewRuler: true,
               scrollBeyondLastLine: false,
               // 使用主题
-              theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
+              theme: useMemo(() => (theme === 'dark' ? 'vs-dark' : 'vs-light'), [theme]),
               fontSize: 14,
               fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
               lineHeight: 20,

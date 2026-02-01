@@ -38,8 +38,7 @@ export function createPromiseLogicCompletionProvider(monaco: Monaco) {
           { label: 'nor', documentation: 'NOR逻辑门 - 所有Promise都失败时成功', insertText: 'nor([$1])', detail: 'PromiseLogic.nor(promises)' },
           { label: 'xnor', documentation: 'XNOR逻辑门 - 所有Promise都成功或都失败时成功', insertText: 'xnor([$1])', detail: 'PromiseLogic.xnor(promises)' },
           { label: 'majority', documentation: 'MAJORITY逻辑 - 多数Promise成功时成功', insertText: 'majority([$1])', detail: 'PromiseLogic.majority(promises)' },
-          { label: 'create', documentation: '创建PromiseLogic实例（工厂模式）', insertText: 'create()', detail: 'PromiseLogic.create()' },
-          { label: 'createFlipFlop', documentation: '创建FlipFlop状态触发器', insertText: 'createFlipFlop(${1:initialState})', detail: 'PromiseLogic.createFlipFlop(boolean)' }
+          { label: 'create', documentation: '创建PromiseLogic实例（工厂模式）', insertText: 'create()', detail: 'PromiseLogic.create()' }
         ]
 
         methods.forEach(method => {

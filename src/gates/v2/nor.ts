@@ -1,4 +1,4 @@
-import { createLogicError } from '../utils/v2/errors';
+import { createLogicError } from '../../utils/v2/errors';
 import { BaseGate } from './BaseGate';
 
 export class NorGate extends BaseGate {
@@ -7,13 +7,14 @@ export class NorGate extends BaseGate {
     const fulfilled = this.filterFulfilledResults(results);
     const fulfilledCount = fulfilled.length;
     const total = results.length;
+    const rejected = this.filterRejectedResults(results);
     
     if (fulfilledCount === 0) {
       // 全部失败，返回空数组表示成功
       return [];
     } else {
       // 任意成功，抛出NOR_ERROR
-      throw createLogicError('NOR_ERROR', fulfilledCount, total, results);
+      throw createLogicError('NOR_ERROR', fulfilledCount, total, results, rejected);
     }
   }
 }

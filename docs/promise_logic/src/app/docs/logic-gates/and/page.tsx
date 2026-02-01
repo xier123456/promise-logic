@@ -4,6 +4,7 @@ import { ReturnValue } from '@/components/docs/ReturnValue'
 import { BehaviorSection } from '@/components/docs/BehaviorSection'
 import { NoteSection } from '@/components/docs/NoteSection'
 import { CodeExamples } from '@/components/docs/CodeExamples'
+import { ErrorTypes } from '@/components/docs/ErrorTypes'
 
 export default function AndDocsPage() {
   const parameters = [
@@ -18,12 +19,19 @@ export default function AndDocsPage() {
     {
       type: 'success' as const,
       title: 'Success Condition',
-      description: 'When all input Promises resolve successfully, the returned Promise resolves to an array of all successful values.'
+      description: 'When all input Promises resolve successfully, returns a PromiseWithTimer that resolves to an array of all successful values.'
     },
     {
       type: 'error' as const,
       title: 'Failure Condition',
-      description: 'When any input Promise is rejected, the returned Promise is immediately rejected with the first rejection reason.'
+      description: 'When any input Promise is rejected, the PromiseWithTimer is immediately rejected with the first rejection reason.'
+    }
+  ]
+
+  const errorTypes = [
+    {
+      type: 'AND_ERROR',
+      description: 'Thrown when any Promise in the input fails'
     }
   ]
 
@@ -58,16 +66,34 @@ try {
 }`
     },
     {
+      title: 'Timeout Control',
+      description: 'Add timeout control with maxTimer method',
+      initialCode: `// Add timeout control with maxTimer method
+try {
+  const results = await PromiseLogic.and([
+    fetch('/api/users').then(r => r.json()),
+    fetch('/api/posts').then(r => r.json()),
+    fetch('/api/stats').then(r => r.json())
+  ]).maxTimer(5000) // 5 second timeout
+  
+  console.log('All data loaded within timeout:', results)
+  return results
+} catch (error) {
+  console.log('Timeout or error:', error.message)
+  return error
+}`
+    },
+    {
       title: 'Real Application',
-      description: 'Load multiple API data in parallel',
-      initialCode: `// Real Application: Load multiple API data in parallel
+      description: 'Load multiple API data in parallel with timeout',
+      initialCode: `// Real Application: Load multiple API data in parallel with timeout
 async function loadDashboardData() {
   try {
     const [users, posts, stats] = await PromiseLogic.and([
       fetch('/api/users').then(r => r.json()),
       fetch('/api/posts').then(r => r.json()),
       fetch('/api/stats').then(r => r.json())
-    ])
+    ]).maxTimer(5000) // 5 second timeout
     
     console.log('User data:', users)
     console.log('Article data:', posts)
@@ -75,7 +101,7 @@ async function loadDashboardData() {
     
     return { users, posts, stats }
   } catch (error) {
-    console.error('Data loading failed:', error)
+    console.error('Data loading failed or timed out:', error)
     throw error
   }
 }
@@ -88,6 +114,8 @@ await loadDashboardData()`
   const notes = [
     'AND logic behaves exactly like standard Promise.all()',
     'Any Promise failure immediately causes overall failure (short-circuit behavior)',
+    'Returns PromiseWithTimer which supports maxTimer() for timeout control',
+    'maxTimer can only detect timeout, cannot cancel the Promise operation itself',
     'Suitable for scenarios where all operations must succeed to continue',
     'For scenarios where partial success is acceptable, consider using PromiseLogic.or()'
   ]
@@ -111,7 +139,7 @@ await loadDashboardData()`
       <div className="prose prose-lg text-gray-600 dark:text-gray-300 dark:prose-invert max-w-none mb-12">
         <p>
           The <code>PromiseLogic.and()</code> method implements AND logic gate semantics, succeeding when all input Promises succeed.
-          It is equivalent to standard <code>Promise.all()</code>, but provides more intuitive logical semantics.
+          It returns a <code>PromiseWithTimer</code> instance which wraps the native Promise and provides additional functionality.
         </p>
       </div>
 
@@ -136,8 +164,8 @@ await loadDashboardData()`
       <div className="mb-12">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Return Value</h2>
         <ReturnValue 
-          description="Returns a Promise that resolves to an array of all input Promise successful values."
-          type="Promise<T[]>"
+          description="Returns a PromiseWithTimer that resolves to an array of all input Promise successful values."
+          type="PromiseWithTimer<T[]>"
         />
       </div>
 
@@ -146,6 +174,9 @@ await loadDashboardData()`
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Behavior</h2>
         <BehaviorSection behaviors={behaviors} />
       </div>
+
+      {/* Error Types */}
+      <ErrorTypes errorTypes={errorTypes} />
 
       {/* Examples */}
       <div className="mb-12">
