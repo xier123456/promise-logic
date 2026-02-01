@@ -32,7 +32,10 @@
 5. **超时控制**
    - `maxTimer`：为任何 Promise 操作添加超时功能（单位：毫秒）。
 
-maxTimer只能侦听Promise操作的超时并返回错误，不能中断和取消Promise操作本身。
+**说明**：
+
+- 超时后会立即中断当前 Promise 链的执行，跳转到错误处理
+- 但请注意，这并不会取消已经开始的底层异步操作（如网络请求、文件读写等）
 
 6. **扩展操作**
    - `allFulfilled`：按顺序返回所有成功结果，当存在成功结果时会立即尝试返回
@@ -48,7 +51,6 @@ npm install promise-logic
 ```
 
 ---
-
 
 ### **4. 快速开始**
 
@@ -117,7 +119,6 @@ PromiseLogic.majority<Response>(services)
 
 #### 示例：超时控制
 
-
 ```javascript
 import { PromiseLogic } from 'promise-logic';
 
@@ -151,7 +152,6 @@ const operations = [
 // 获取所有成功结果（一有成功就立即返回）
 PromiseLogic.allFulfilled(operations).then((results) => {
   console.log('成功结果:', results); // ['success1', 'success2']
-
 });
 
 // 获取所有失败结果（一有失败就立即返回）
@@ -170,9 +170,7 @@ PromiseLogic.allSettled(operations).then((results) => {
   //   { status: 'rejected', reason: 'error2' }
   // ]
 });
-
 ```
-
 
 #### 示例：allFulfilled - 执行时机和结果
 
@@ -183,7 +181,7 @@ const startTime = Date.now();
 console.log('开始执行 allFulfilled，时间:', startTime);
 
 const allFulfilledResult = await PromiseLogic.allFulfilled([
-  new Promise(resolve => {
+  new Promise((resolve) => {
     console.log('第一个 Promise 开始（慢）');
     setTimeout(() => {
       console.log('第一个 Promise 完成:', 'success1');
@@ -191,7 +189,7 @@ const allFulfilledResult = await PromiseLogic.allFulfilled([
     }, 100);
   }),
   Promise.reject('error'),
-  new Promise(resolve => {
+  new Promise((resolve) => {
     console.log('第三个 Promise 开始（快）');
     setTimeout(() => {
       console.log('第三个 Promise 完成:', 'success2');
@@ -206,6 +204,7 @@ console.log('allFulfilled 完整结果:', allFulfilledResult); // ['success1', '
 ```
 
 **说明：**
+
 - **第一个返回信息**：第三个 Promise 在 10ms 时完成，立即返回 `['success2']`
 - **完整返回信息**：第一个 Promise 在 100ms 时完成，最终完整结果为 `['success1', 'success2']`
 - **执行时机**：一有成功就立即返回，不等待所有 Promise 完成
@@ -243,6 +242,7 @@ console.log('allRejected 完整结果:', allRejectedResult); // ['error1', 'erro
 ```
 
 **说明：**
+
 - **第一个返回信息**：第二个 Promise 在 10ms 时完成，立即返回 `['error1']`
 - **完整返回信息**：第三个 Promise 在 100ms 时完成，最终完整结果为 `['error1', 'error2']`
 - **执行时机**：一有失败就立即返回，不等待所有 Promise 完成
@@ -281,7 +281,6 @@ PromiseLogic.majority(services, { max: 0.4 })
 - **测试完善**：添加 `allFulfilled`、`allRejected` 和 `maxTimer` 完整测试用例
 - **代码重构**：改进代码结构，提高可维护性
 
-
 ### v2.7.0
 
 - **新增模块化架构**：将逻辑门实现独立为单独模块，提高代码可维护性
@@ -289,7 +288,6 @@ PromiseLogic.majority(services, { max: 0.4 })
 - **优化错误提示**：改进错误信息格式，提供更清晰的错误详情
 - **完善测试覆盖**：为 v1 和 v2 版本添加完整的工厂函数测试
 - **更新文档**：添加自定义工厂函数使用指南
-
 
 ### 使用工厂函数
 
@@ -335,23 +333,21 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 
 ### **5. API 参考**
 
-| API            | 说明                                                                                                                         |
-| :------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| `and`          | 所有 Promise 成功，返回结果数组；任一失败则整体失败，等价原生 `Promise.all`。                                                                        |
-| `or`           | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败，等价原生 `Promise.any`。                                                                |
-| `xor`          | **有且仅有一个 Promise 成功**，返回该结果；否则抛出 `XOR_ERROR`。                                                            |
-| `nand`         | 不是所有 Promise 都成功（至少一个失败），返回成功结果数组；全部成功则整体失败。                                              |
-| `nor`          | 所有 Promise 都失败（没有任务成功），返回空数组；任一成功则整体失败。                                                        |
-| `xnor`         | 所有 Promise 都成功或都失败（状态相同），返回成功结果数组；否则抛出 `XNOR_ERROR`。                                           |
-| `not`          | 反转单个 Promise 的结果：成功变失败，失败变成功。                                                                            |
-| `majority`     | 超过指定阈值的 Promise 成功，返回成功结果数组；否则整体失败。接受 `options` 参数，其中 `max` 属性可自定义阈值（默认：0.5），范围：(0, 1)。 |
-| `allFulfilled` | 返回所有成功结果作为数组，忽略失败结果。存在成功结果立即返回，同时保持输入输出顺序一致。                   |
-| `allRejected`  | 返回所有失败结果作为数组，忽略成功结果。存在失败结果立即返回，同时保持输入输出顺序一致。                 |
-| `allSettled`   | 返回所有结果（包括成功和失败）作为数组，等价原生 `Promise.allSettled`）。                                                                                     |
-| `race`         | 返回第一个完成的 Promise 结果（无论成功或失败），等价原生 `Promise.race`。                                                                            |
-| `maxTimer`     | 为任何 Promise 操作添加超时功能（单位：毫秒）。支持自定义超时错误信息。                                              |
-
-## **注意**：`maxTimer` 只能侦听 Promise 操作的超时并返回错误，不能中断和取消 Promise 操作本身。
+| API            | 说明                                                                                                                                       |
+| :------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| `and`          | 所有 Promise 成功，返回结果数组；任一失败则整体失败，等价原生 `Promise.all`。                                                              |
+| `or`           | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败，等价原生 `Promise.any`。                                                      |
+| `xor`          | **有且仅有一个 Promise 成功**，返回该结果；否则抛出 `XOR_ERROR`。                                                                          |
+| `nand`         | 不是所有 Promise 都成功（至少一个失败），返回成功结果数组；全部成功则整体失败。                                                            |
+| `nor`          | 所有 Promise 都失败（没有任务成功），返回空数组；任一成功则整体失败。                                                                      |
+| `xnor`         | 所有 Promise 都成功或都失败（状态相同），返回成功结果数组；否则抛出 `XNOR_ERROR`。                                                         |
+| `not`          | 反转单个 Promise 的结果：成功变失败，失败变成功。                                                                                          |
+| `majority`     | 超过指定阈值的 Promise 成功，返回成功结果数组；否则整体失败。接受 `options` 参数，其中 `max` 属性可自定义阈值（默认：0.5），范围：[0,1]。 |
+| `allFulfilled` | 返回所有成功结果作为数组，忽略失败结果。存在成功结果立即返回，同时保持输入输出顺序一致。                                                   |
+| `allRejected`  | 返回所有失败结果作为数组，忽略成功结果。存在失败结果立即返回，同时保持输入输出顺序一致。                                                   |
+| `allSettled`   | 返回所有结果（包括成功和失败）作为数组，等价原生 `Promise.allSettled`）。                                                                  |
+| `race`         | 返回第一个完成的 Promise 结果（无论成功或失败），等价原生 `Promise.race`。                                                                 |
+| `maxTimer`     | 为任何 Promise 操作添加超时功能（单位：毫秒）。支持自定义超时错误信息。                                                                    |
 
 ### **6. 实际应用场景**
 
@@ -385,8 +381,6 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
    - 使用 `nand` 验证不是所有 Promise 都成功（至少一个失败）。
    - 使用 `nor` 验证所有 Promise 都失败（没有任务成功）。
    - 使用 `xnor` 验证所有 Promise 都成功或都失败（状态相同）。
-
-
 
 ---
 

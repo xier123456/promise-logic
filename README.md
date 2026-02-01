@@ -32,11 +32,13 @@ Traditional Promise combinations (such as `Promise.all`, `Promise.race`) have na
 5. **Timeout Control**
    - `maxTimer`: Adds timeout functionality to any Promise operation (unit: milliseconds).
 
-`maxTimer` can only detect timeout of Promise operations, cannot interrupt or cancel Promise operations themselves, this is a JavaScript characteristic.
+**Note**:
+- After timeout, it immediately interrupts the execution of the current Promise chain and jumps to error handling
+- However, please note that this does not cancel underlying asynchronous operations that have already started (such as network requests, file read/write, etc.)
 
 6. **Extended Operations**
-   - `allFulfilled`: Returns all successful results. Returns immediately when a result exists, while maintaining input order.
-   - `allRejected`: Returns all failed results. Returns immediately when a result exists, while maintaining input order.
+   - `allFulfilled`: Returns all successful results in order. Returns immediately when a result exists.
+   - `allRejected`: Returns all failed results in order. Returns immediately when a result exists.
    - `allSettled`: Returns all results (both successful and failed)
 
 ---
@@ -338,14 +340,13 @@ PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 | `nor`          | All Promises fail (no task succeeds), returns empty array; any success causes overall failure.                                                        |
 | `xnor`         | All Promises succeed or all fail (same state), returns success result array; otherwise throws `XNOR_ERROR`.                                           |
 | `not`          | Inverts the result of a single Promise: success becomes failure, failure becomes success.                                                                            |
-| `majority`     | More than specified threshold of Promises succeed, returns success result array; otherwise overall failure. Accepts `options` parameter, where `max` property can customize threshold (default: 0.5), range: (0, 1). |
-| `allFulfilled` | Returns all successful results as an array, ignoring failures. Returns immediately when a result exists, while maintaining input order.                     |
-| `allRejected`  | Returns all failed results as an array, ignoring successes. Returns immediately when a result exists, while maintaining input order.                     |
+| `majority`     | More than specified threshold of Promises succeed, returns success result array; otherwise overall failure. Accepts `options` parameter, where `max` property can customize threshold (default: 0.5), range: [0, 1]. |
+| `allFulfilled` | Returns all successful results as an array, ignoring failures. Returns immediately when a result exists, while maintaining consistent input and output order.                     |
+| `allRejected`  | Returns all failed results as an array, ignoring successes. Returns immediately when a result exists, while maintaining consistent input and output order.                     |
 | `allSettled`   | Returns all results (both successful and failed) as an array. Equivalent to native `Promise.allSettled`.                                                                                     |
 | `race`         | Returns the first completed Promise result (regardless of success or failure). Equivalent to native `Promise.race`.                                                                            |
 | `maxTimer`     | Adds timeout functionality to any Promise operation (unit: milliseconds). Supports custom timeout error messages.                                              |
 
-## **Note**: `maxTimer` can only detect timeout of Promise operations, cannot interrupt or cancel Promise operations themselves, this is a JavaScript characteristic.
 
 ### **6. Real-world Application Scenarios**
 
