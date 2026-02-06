@@ -6,9 +6,19 @@ export type LogicGateType =
   | 'NOR' 
   | 'XNOR' 
   | 'MAJORITY'
+  
 
-export interface LogicGateVisualizerProps {
-  type: LogicGateType
+export type ExtendedLogicGateType =
+|'AllFulfilled'
+|'AllRejected'
+|'AllSelttled'
+
+export type utilityLogicGateType =
+|'not'
+|'race'
+
+export interface visualizerProps {
+  type: LogicGateType | ExtendedLogicGateType | utilityLogicGateType
   inputs: boolean[]
   output: boolean
   isProcessing?: boolean

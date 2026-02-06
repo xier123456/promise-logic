@@ -22,7 +22,7 @@ export class PromiseLogic {
   static and<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
   static or<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
   static race<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
-  static not<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
+  static not<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
   static allSettled<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<PromiseSettledResult<T>[]>;
   
   static xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;

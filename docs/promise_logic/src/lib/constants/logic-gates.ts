@@ -1,6 +1,6 @@
 import { LogicGateType } from '../types/logic-gate'
-import { LogicGateHandler, ExtendedLogicGateHandler, NotLogicGateHandler } from '../types/logic-gates'
-import {PromiseLogic} from 'promise-logic'
+import { LogicGateHandler, ExtendedLogicOperations, UtilityOperations } from '../types/logic-gates'
+import { PromiseLogic } from 'promise-logic'
 
 export const LOGIC_GATES: LogicGateType[] = [
   'AND', 
@@ -78,46 +78,36 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
   }
 }
 
-export const EXTENDED_LOGIC_OPERATIONS = {
+export const EXTENDED_LOGIC_OPERATIONS: ExtendedLogicOperations = {
   allFulfilled: async (inputs: boolean[]) => {
     const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    try {
-      const result = await PromiseLogic.allFulfilled(promises)
-      return { success: true, data: result }
-    } catch {
-      return { success: false, data: [] }
-    }
+    const result = await PromiseLogic.allFulfilled(promises)
+    const hasFulfilled = result.length > 0
+    return { success: hasFulfilled, data: result }
   },
   allRejected: async (inputs: boolean[]) => {
     const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    try {
-      const result = await PromiseLogic.allRejected(promises)
-      return { success: true, data: result }
-    } catch {
-      return { success: false, data: [] }
-    }
+    const result = await PromiseLogic.allRejected(promises)
+    const hasRejected = result.length > 0
+    return { success: hasRejected, data: result }
   },
   allSettled: async (inputs: boolean[]) => {
     const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    try {
-      const result = await PromiseLogic.allSettled(promises)
-      return { success: true, data: result }
-    } catch {
-      return { success: false, data: [] }
-    }
+    const result = await PromiseLogic.allSettled(promises)
+    return { success: true, data: result }
   }
 }
 
-export const UTILITY_OPERATIONS = {
-  // not: async (input: boolean) => {
-  //   const promise = input ? Promise.resolve(input) : Promise.reject(input)
-  //   try {
-  //     const result = await PromiseLogic.not(promise)
-  //     return { success: true, data: result }
-  //   } catch {
-  //     return { success: false, data: null }
-  //   }
-  // },
+export const UTILITY_OPERATIONS: UtilityOperations = {
+  not: async (input: boolean) => {
+    const promise = input ? Promise.resolve(input) : Promise.reject(input)
+    try {
+      const result = await PromiseLogic.not(promise)
+      return { success: true, data: result }
+    } catch {
+      return { success: false, data: null }
+    }
+  },
   race: async (inputs: boolean[]) => {
     const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
     try {

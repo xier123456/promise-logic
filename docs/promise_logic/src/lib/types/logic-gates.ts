@@ -13,3 +13,14 @@ export type LogicGateHandler = (inputs: boolean[]) => Promise<LogicGateResult>
 export type ExtendedLogicGateHandler = (inputs: boolean[]) => Promise<ExtendedLogicGateResult>
 
 export type NotLogicGateHandler = (input: boolean) => Promise<LogicGateResult>
+
+export interface ExtendedLogicOperations {
+  allFulfilled: ExtendedLogicGateHandler
+  allRejected: ExtendedLogicGateHandler
+  allSettled: ExtendedLogicGateHandler
+}
+
+export interface UtilityOperations {
+  not: NotLogicGateHandler
+  race: LogicGateHandler
+}

@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import {
+  ExtendedLogicGateType,
   LogicGateType,
-  LogicGateVisualizerProps
+  utilityLogicGateType,
+  visualizerProps,
 } from '@/lib/types/logic-gate';
-import { LogicGateResult } from '@/lib/types/logic-gates';
-import { LOGIC_GATE_TRUTH_TABLE } from '@/lib/constants/logic-gates';
+import { LogicGateHandler, LogicGateResult } from '@/lib/types/logic-gates';
+import {
+  LOGIC_GATE_TRUTH_TABLE,
+  EXTENDED_LOGIC_OPERATIONS,
+  UTILITY_OPERATIONS
+} from '@/lib/constants/logic-gates';
 import { cn } from '@/lib/utils/dom';
 
 export function LogicGateVisualizer({
@@ -14,7 +20,7 @@ export function LogicGateVisualizer({
   interactive = true,
   size = 'md'
 }: Omit<
-  LogicGateVisualizerProps,
+  visualizerProps,
   'inputs' | 'output' | 'isProcessing' | 'onInputToggle'
 >) {
   const [inputs, setInputs] = useState<{ content: string; status: boolean }[]>([
@@ -36,9 +42,28 @@ export function LogicGateVisualizer({
   const calculateOutput = async () => {
     setIsProcessing(true);
     setTimeout(async () => {
-      const result = await LOGIC_GATE_TRUTH_TABLE[type](
-        inputs.map((input) => input.status)
-      );
+      let result: LogicGateResult;
+
+      if (type in LOGIC_GATE_TRUTH_TABLE) {
+        result = await LOGIC_GATE_TRUTH_TABLE[type as LogicGateType](
+          inputs.map((input) => input.status)
+        );
+      } else if (type in EXTENDED_LOGIC_OPERATIONS) {
+        result = await EXTENDED_LOGIC_OPERATIONS[type as keyof typeof EXTENDED_LOGIC_OPERATIONS](
+          inputs.map((input) => input.status)
+        );
+      } else if (type in UTILITY_OPERATIONS) {
+        if (type === 'not') {
+          result = await UTILITY_OPERATIONS.not(inputs[0].status);
+        } else {
+          result = await UTILITY_OPERATIONS[type as Exclude<keyof typeof UTILITY_OPERATIONS, 'not'>](
+            inputs.map((input) => input.status)
+          );
+        }
+      } else {
+        result = { success: false, data: null };
+      }
+
       setOutput(result);
 
       // 只有当结果为true时才添加到栈中
@@ -58,7 +83,7 @@ export function LogicGateVisualizer({
               ? successInputs.join(', ')
               : 'All conditions met';
         } else {
-          newContent = '';
+          newContent = successInputs.join(', ');
         }
 
         setOutputStack([{content: newContent, status: result.success}]);
@@ -86,7 +111,6 @@ export function LogicGateVisualizer({
   };
 
   const addInput = () => {
-    // if (inputs.length >= 5) return
     setInputs((prev) => [
       ...prev,
       { content: `p${prev.length + 1}`, status: false }
@@ -94,7 +118,6 @@ export function LogicGateVisualizer({
   };
 
   const removeInput = () => {
-    if (inputs.length <= 2) return;
     setInputs((prev) => prev.slice(0, -1));
   };
 
@@ -122,7 +145,6 @@ export function LogicGateVisualizer({
           <div className="flex items-center space-x-2">
             <button
               onClick={removeInput}
-              disabled={inputs.length <= 2}
               className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               - Input
