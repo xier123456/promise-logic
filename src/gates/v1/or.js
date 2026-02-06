@@ -6,7 +6,7 @@ export class OrGate extends BaseGate {
     try {
       return await Promise.any(iterable);
     } catch (errorArr) {
-      throw createLogicError('OR_ERROR', 0, iterable.length, [...iterable], errorArr);
+      throw createLogicError('OR_ERROR', 0, iterable.length, [], errorArr);
     }
   }
 }

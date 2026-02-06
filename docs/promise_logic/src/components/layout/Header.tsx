@@ -21,6 +21,10 @@ const navigation: NavigationItem[] = [
   {
     name: 'Docs',
     href: '/docs',
+  },
+  {
+    name: 'Demo',
+    href: '/demo',
   }
 ]
 

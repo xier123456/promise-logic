@@ -1,36 +1,50 @@
-# Promise-Logic 完整 API 文档
+### **1. 核心理念**
 
-## 目录
-
-1. [概述](#概述)
-2. [安装](#安装)
-3. [核心概念](#核心概念)
-4. [逻辑门方法](#逻辑门方法)
-5. [扩展操作](#扩展操作)
-6. [工具方法](#工具方法)
-7. [工厂函数](#工厂函数)
-8. [错误处理](#错误处理)
-9. [类型定义](#类型定义)
-10. [使用示例](#使用示例)
+**用逻辑概念替代 API 记忆**  
+`promise-logic` 的设计哲学是：**开发者应专注于业务逻辑，而非 Promise API 的细节**。  
+传统 Promise 组合（如 `Promise.all`、`Promise.race`）的命名与语义不够直观，尤其在复杂异步场景下，代码可读性迅速下降。  
+`promise-logic` 通过**逻辑门（Logic Gate）** 的方式，将异步组合抽象为 `and`、`or`、`xor` 等逻辑操作，使代码语义清晰、逻辑自解释。
 
 ---
 
-## 概述
+### **2. 功能特性**
 
-`promise-logic` 是一个基于逻辑门概念的 Promise 组合库，通过 `and`、`or`、`xor` 等逻辑操作来组合异步任务，使代码语义更加清晰。
+1. **逻辑语义化**
+   - `and`：所有任务必须成功（等价于 `Promise.all`）
+   - `or`：至少一个任务成功（等价于 `Promise.any`）
+   - `xor`：**有且仅有一个任务成功**
+   - `nand`：不是所有任务都成功（至少一个失败）
+   - `nor`：所有任务都失败（没有任务成功）
+   - `xnor`：所有任务都成功或都失败（状态相同）
+   - `not`：反转单个 Promise 的结果
+   - `majority`：多数任务成功
 
-### 核心特性
+2. **零依赖**  
+   仅依赖原生 Promise，无额外运行时依赖。
 
-- **逻辑语义化**：使用逻辑门概念替代 Promise API
-- **零依赖**：仅依赖原生 Promise
-- **全测试覆盖**：所有方法经过严格单元测试
-- **错误分类明确**：统一的错误类型和错误分类
-- **超时控制**：为任何 Promise 操作添加超时功能
-- **TypeScript 支持**：完整的类型定义
+3. **全测试覆盖**  
+   所有逻辑门均经过严格单元测试，确保行为符合预期。
+
+4. **错误分类明确**
+   - `PromiseLogicError` 统一错误类型
+   - `error.type` 区分具体逻辑错误（如 `'XOR_ERROR'`）
+
+5. **超时控制**
+   - `maxTimer`：为任何 Promise 操作添加超时功能（单位：毫秒）。
+
+**说明**：
+
+- 超时后会立即中断当前 Promise 链的执行，跳转到错误处理
+- 但请注意，这并不会取消已经开始的底层异步操作（如网络请求、文件读写等）
+
+6. **扩展操作**
+   - `allFulfilled`：按顺序返回所有成功结果，当存在成功结果时会立即尝试返回
+   - `allRejected`：按顺序返回所有失败结果，当存在失败结果时会立即尝试返回
+   - `allSettled`：返回所有结果（包括成功和失败）
 
 ---
 
-## 安装
+### **3. 安装**
 
 ```bash
 npm install promise-logic
@@ -38,329 +52,205 @@ npm install promise-logic
 
 ---
 
-## 核心概念
+### **4. 快速开始**
 
-### 逻辑门
+#### 示例：主备服务调用（XOR 场景）
 
-Promise-Logic 将异步组合抽象为逻辑门操作：
-
-- **AND 门**：所有输入为真时输出为真
-- **OR 门**：至少一个输入为真时输出为真
-- **XOR 门**：有且仅有一个输入为真时输出为真
-- **NAND 门**：所有输入为真时输出为假
-- **NOR 门**：所有输入为假时输出为真
-- **XNOR 门**：所有输入相同（全真或全假）时输出为真
-- **MAJORITY 门**：多数输入为真时输出为真
-
-### PromiseWithTimer
-
-所有方法返回 `PromiseWithTimer` 实例，它包装了原生 Promise 并提供额外功能：
-
-- `maxTimer(ms)`：添加超时控制
-- `then()`、`catch()`、`finally()`：标准 Promise 方法
-- `toPromise()`：转换为普通 Promise
-
----
-
-## 逻辑门方法
-
-### and
-
-所有 Promise 必须成功，返回结果数组；任一失败则整体失败。
-
-**语法**
-
-```typescript
-PromiseLogic.and<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T[]>`：所有 Promise 成功时的结果数组
-
-**示例**
-
-```typescript
+```javascript
 import { PromiseLogic } from 'promise-logic';
 
-const promises = [
-  Promise.resolve(1),
-  Promise.resolve(2),
-  Promise.resolve(3)
-];
-
-PromiseLogic.and(promises)
-  .then(results => {
-    console.log(results); // [1, 2, 3]
-  })
-  .catch(error => {
-    console.error('AND gate failed:', error);
-  });
-```
-
-**错误类型**
-
-- `AND_ERROR`：当任一 Promise 失败时抛出
-
----
-
-### or
-
-至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败。
-
-**语法**
-
-```typescript
-PromiseLogic.or<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T>`：首个成功 Promise 的结果
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const promises = [
-  new Promise(resolve => setTimeout(() => resolve('fast'), 100)),
-  new Promise(resolve => setTimeout(() => resolve('slow'), 200))
-];
-
-PromiseLogic.or(promises)
-  .then(result => {
-    console.log(result); // 'fast'
-  })
-  .catch(error => {
-    console.error('OR gate failed:', error);
-  });
-```
-
----
-
-### xor
-
-有且仅有一个 Promise 成功，返回该结果；否则抛出 `XOR_ERROR`。
-
-**语法**
-
-```typescript
-PromiseLogic.xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T>`：唯一成功 Promise 的结果
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-// 主备服务调用场景
+// 主服务调用
 const primary = fetch('https://api.main.com/data');
+// 备用服务调用
 const backup = fetch('https://api.backup.com/data');
 
+// 执行 XOR 逻辑：有且仅有一个成功
 PromiseLogic.xor([primary, backup])
-  .then(result => {
+  .then((result) => {
     console.log('成功获取数据:', result);
   })
-  .catch(error => {
+  .catch((error) => {
     if (error.type === 'XOR_ERROR') {
       console.error('主备服务均成功或均失败，不符合 XOR 语义');
+    } else {
+      console.error('网络错误:', error);
     }
   });
 ```
 
-**错误类型**
+#### 示例：多数决决策（Majority 场景）
 
-- `XOR_ERROR`：当成功数量不等于 1 时抛出
-
----
-
-### nand
-
-所有 Promise 均失败时成功，返回成功结果数组；任一成功则整体失败。
-
-**语法**
-
-```typescript
-PromiseLogic.nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T[]>`：成功 Promise 的结果数组（当不是所有都成功时）
-
-**示例**
-
-```typescript
+```javascript
 import { PromiseLogic } from 'promise-logic';
 
-const promises = [
-  Promise.reject('error1'),
-  Promise.reject('error2'),
-  Promise.resolve('success')
+const services = [
+  fetch('https://api.node1.com/vote'),
+  fetch('https://api.node2.com/vote'),
+  fetch('https://api.node3.com/vote')
 ];
 
-PromiseLogic.nand(promises)
-  .then(results => {
-    console.log(results); // ['success']
+PromiseLogic.majority(services)
+  .then((results) => {
+    console.log('多数服务返回成功:', results);
   })
-  .catch(error => {
-    if (error.type === 'NAND_ERROR') {
-      console.error('所有 Promise 都成功了，不符合 NAND 语义');
-    }
+  .catch((error) => {
+    console.error('多数服务失败:', error);
   });
 ```
 
-**错误类型**
-
-- `NAND_ERROR`：当所有 Promise 都成功时抛出
-
----
-
-### nor
-
-所有 Promise 均失败时成功，返回空数组；任一成功则整体失败。
-
-**语法**
-
 ```typescript
-PromiseLogic.nor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>
-```
+import { PromiseLogic } from 'promise-logic/typescript';
 
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T[]>`：空数组（当所有都失败时）
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const promises = [
-  Promise.reject('error1'),
-  Promise.reject('error2'),
-  Promise.reject('error3')
+const services = [
+  fetch('https://api.node1.com/vote'),
+  fetch('https://api.node2.com/vote'),
+  fetch('https://api.node3.com/vote')
 ];
 
-PromiseLogic.nor(promises)
-  .then(results => {
-    console.log(results); // []
+//可以进行类型断言，也可以默认让PromiseLogic自动推断类型
+PromiseLogic.majority<Response>(services)
+  .then((results) => {
+    console.log('多数服务返回成功:', results);
   })
-  .catch(error => {
-    if (error.type === 'NOR_ERROR') {
-      console.error('有 Promise 成功了，不符合 NOR 语义');
-    }
+  .catch((error) => {
+    console.error('多数服务失败:', error);
   });
 ```
 
-**错误类型**
+#### 示例：超时控制
 
-- `NOR_ERROR`：当有任一 Promise 成功时抛出
-
----
-
-### xnor
-
-所有 Promise 全部成功或全部失败时成功，返回成功结果数组；否则抛出 `XNOR_ERROR`。
-
-**语法**
-
-```typescript
-PromiseLogic.xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T[]>`：成功 Promise 的结果数组
-
-**示例**
-
-```typescript
+```javascript
 import { PromiseLogic } from 'promise-logic';
 
-// 全部成功
-const allSuccess = [
+// 执行带自定义超时错误信息的操作
+PromiseLogic.and([
   Promise.resolve(1),
-  Promise.resolve(2),
+  new Promise((resolve) => setTimeout(resolve, 3000)), // 3秒操作
   Promise.resolve(3)
-];
-
-PromiseLogic.xnor(allSuccess)
-  .then(results => {
-    console.log(results); // [1, 2, 3]
+])
+  .maxTimer(2000, '自定义超时错误：操作在 2000ms 内未完成') // 2秒超时，自定义错误信息
+  .then((result) => {
+    console.log('操作在超时时间内完成:', result);
+  })
+  .catch((error) => {
+    console.error('操作超时:', error.message); // 输出: 自定义超时错误：操作在 2000ms 内未完成
   });
+```
 
-// 全部失败
-const allFail = [
+#### 示例：扩展操作
+
+```javascript
+import { PromiseLogic } from 'promise-logic';
+
+const operations = [
+  Promise.resolve('success1'),
   Promise.reject('error1'),
+  Promise.resolve('success2'),
   Promise.reject('error2')
 ];
 
-PromiseLogic.xnor(allFail)
-  .then(results => {
-    console.log(results); // []
-  });
+// 获取所有成功结果（一有成功就立即返回）
+PromiseLogic.allFulfilled(operations).then((results) => {
+  console.log('成功结果:', results); // ['success1', 'success2']
+});
+
+// 获取所有失败结果（一有失败就立即返回）
+PromiseLogic.allRejected(operations).then((errors) => {
+  console.log('失败结果:', errors); // ['error1', 'error2']
+});
+
+// 获取所有结果（包括成功和失败）
+PromiseLogic.allSettled(operations).then((results) => {
+  console.log('所有结果:', results);
+  // 输出：
+  // [
+  //   { status: 'fulfilled', value: 'success1' },
+  //   { status: 'rejected', reason: 'error1' },
+  //   { status: 'fulfilled', value: 'success2' },
+  //   { status: 'rejected', reason: 'error2' }
+  // ]
+});
 ```
 
-**错误类型**
+#### 示例：allFulfilled - 执行时机和结果
 
-- `XNOR_ERROR`：当部分成功、部分失败时抛出
+```javascript
+import { PromiseLogic } from 'promise-logic';
 
----
+const startTime = Date.now();
+console.log('开始执行 allFulfilled，时间:', startTime);
 
-### majority
+const allFulfilledResult = await PromiseLogic.allFulfilled([
+  new Promise((resolve) => {
+    console.log('第一个 Promise 开始（慢）');
+    setTimeout(() => {
+      console.log('第一个 Promise 完成:', 'success1');
+      resolve('success1');
+    }, 100);
+  }),
+  Promise.reject('error'),
+  new Promise((resolve) => {
+    console.log('第三个 Promise 开始（快）');
+    setTimeout(() => {
+      console.log('第三个 Promise 完成:', 'success2');
+      resolve('success2');
+    }, 10);
+  })
+]);
 
-超过指定阈值的 Promise 成功时成功，返回成功结果数组；否则整体失败。
-
-**语法**
-
-```typescript
-PromiseLogic.majority<T>(
-  iterable: Iterable<T | PromiseLike<T>>,
-  options?: { max: number }
-): PromiseWithTimer<T[]>
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allFulfilled 完整结果:', allFulfilledResult); // ['success1', 'success2']
 ```
 
-**参数**
+**说明：**
 
-- `iterable`：Promise 或值的可迭代对象
-- `options.max`：成功阈值，默认 0.5（50%），范围 0-1
+- **第一个返回信息**：第三个 Promise 在 10ms 时完成，立即返回 `['success2']`
+- **完整返回信息**：第一个 Promise 在 100ms 时完成，最终完整结果为 `['success1', 'success2']`
+- **执行时机**：一有成功就立即返回，不等待所有 Promise 完成
+- **顺序保持**：完整结果按输入顺序返回，而不是按完成顺序
 
-**返回值**
+#### 示例：allRejected - 执行时机和结果
 
-- `PromiseWithTimer<T[]>`：成功 Promise 的结果数组
+```javascript
+import { PromiseLogic } from 'promise-logic';
 
-**示例**
+const startTime = Date.now();
+console.log('开始执行 allRejected，时间:', startTime);
 
-```typescript
+const allRejectedResult = await PromiseLogic.allRejected([
+  Promise.resolve('success1'),
+  new Promise((_, reject) => {
+    console.log('第二个 Promise 开始（快）');
+    setTimeout(() => {
+      console.log('第二个 Promise 完成:', 'error1');
+      reject('error1');
+    }, 10);
+  }),
+  new Promise((_, reject) => {
+    console.log('第三个 Promise 开始（慢）');
+    setTimeout(() => {
+      console.log('第三个 Promise 完成:', 'error2');
+      reject('error2');
+    }, 100);
+  })
+]);
+
+const endTime = Date.now();
+const elapsedTime = endTime - startTime;
+console.log('allRejected 完整结果:', allRejectedResult); // ['error1', 'error2']
+```
+
+**说明：**
+
+- **第一个返回信息**：第二个 Promise 在 10ms 时完成，立即返回 `['error1']`
+- **完整返回信息**：第三个 Promise 在 100ms 时完成，最终完整结果为 `['error1', 'error2']`
+- **执行时机**：一有失败就立即返回，不等待所有 Promise 完成
+- **顺序保持**：完整结果按输入顺序返回，而不是按完成顺序
+
+#### 示例：自定义 majority 阈值
+
+```javascript
 import { PromiseLogic } from 'promise-logic';
 
 const services = [
@@ -371,534 +261,43 @@ const services = [
 ];
 
 // 默认阈值（0.5）：需要至少3个成功
-PromiseLogic.majority(services)
-  .then(results => {
-    console.log(results);
-  })
-  .catch(error => {
-    console.error('未达到多数阈值:', error);
-  });
-
 // 自定义阈值（0.4）：需要至少2个成功
 PromiseLogic.majority(services, { max: 0.4 })
-  .then(results => {
-    console.log(results); // ['service1', 'service2']
-  });
-```
-
-**错误类型**
-
-- `MAJORITY_ERROR`：当成功数量未达到阈值时抛出
-
----
-
-## 扩展操作
-
-### allFulfilled
-
-返回所有成功结果作为数组，忽略失败结果。
-
-**语法**
-
-```typescript
-PromiseLogic.allFulfilled(
-  iterable: Iterable<PromiseLike<unknown>>
-): PromiseWithTimer<unknown[]>
-```
-
-**参数**
-
-- `iterable`：Promise 的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<unknown[]>`：所有成功 Promise 的结果数组
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const operations = [
-  Promise.resolve('success1'),
-  Promise.reject('error1'),
-  Promise.resolve('success2'),
-  Promise.reject('error2')
-];
-
-PromiseLogic.allFulfilled(operations)
-  .then(results => {
-    console.log(results); // ['success1', 'success2']
-  });
-```
-
----
-
-### allRejected
-
-返回所有失败结果作为数组，忽略成功结果。
-
-**语法**
-
-```typescript
-PromiseLogic.allRejected<T>(
-  iterable: Iterable<T | PromiseLike<T>>
-): PromiseWithTimer<unknown[]>
-```
-
-**参数**
-
-- `iterable`：Promise 的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<unknown[]>`：所有失败 Promise 的错误原因数组
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const operations = [
-  Promise.resolve('success1'),
-  Promise.reject('error1'),
-  Promise.resolve('success2'),
-  Promise.reject('error2')
-];
-
-PromiseLogic.allRejected(operations)
-  .then(errors => {
-    console.log(errors); // ['error1', 'error2']
-  });
-```
-
----
-
-### allSettled
-
-返回所有结果（包括成功和失败）作为数组。
-
-**语法**
-
-```typescript
-PromiseLogic.allSettled<T>(
-  iterable: Iterable<T | PromiseLike<T>>
-): PromiseWithTimer<PromiseSettledResult<T>[]>
-```
-
-**参数**
-
-- `iterable`：Promise 的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<PromiseSettledResult<T>[]>`：所有 Promise 的结果数组
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const operations = [
-  Promise.resolve('success1'),
-  Promise.reject('error1'),
-  Promise.resolve('success2')
-];
-
-PromiseLogic.allSettled(operations)
-  .then(results => {
-    results.forEach(result => {
-      if (result.status === 'fulfilled') {
-        console.log('成功:', result.value);
-      } else {
-        console.log('失败:', result.reason);
-      }
-    });
-  });
-```
-
----
-
-### not
-
-反转单个 Promise 的结果：成功变失败，失败变成功。
-
-**语法**
-
-```typescript
-PromiseLogic.not<T>(promise: PromiseLike<T>): PromiseWithTimer<unknown>
-```
-
-**参数**
-
-- `promise`：要反转的 Promise
-
-**返回值**
-
-- `PromiseWithTimer<unknown>`：反转后的结果
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-// 成功的 Promise 变失败
-PromiseLogic.not(Promise.resolve('success'))
-  .catch(error => {
-    console.log(error); // 'success'
-  });
-
-// 失败的 Promise 变成功
-PromiseLogic.not(Promise.reject('error'))
-  .then(result => {
-    console.log(result); // 'error'
-  });
-```
-
----
-
-## 工具方法
-
-### race
-
-返回第一个完成的 Promise 结果（无论成功或失败）。
-
-**语法**
-
-```typescript
-PromiseLogic.race<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>
-```
-
-**参数**
-
-- `iterable`：Promise 或值的可迭代对象
-
-**返回值**
-
-- `PromiseWithTimer<T>`：第一个完成的 Promise 的结果
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const promises = [
-  new Promise(resolve => setTimeout(() => resolve('fast'), 100)),
-  new Promise(resolve => setTimeout(() => resolve('slow'), 200))
-];
-
-PromiseLogic.race(promises)
-  .then(result => {
-    console.log(result); // 'fast'
-  });
-```
-
----
-
-### maxTimer
-
-为任何 Promise 操作添加超时功能（单位：毫秒）。
-
-**注意**：`maxTimer` 只能侦听 Promise 操作的超时，不能中断和取消 Promise 操作本身，这是 JavaScript 的特性。
-
-**语法**
-
-```typescript
-promiseWithTimer.maxTimer(ms: number): Promise<T>
-```
-
-**参数**
-
-- `ms`：超时时间（毫秒）
-
-**返回值**
-
-- `Promise<T>`：带超时控制的 Promise
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-PromiseLogic.and([
-  Promise.resolve(1),
-  new Promise(resolve => setTimeout(resolve, 1000)),
-  Promise.resolve(3)
-])
-.maxTimer(2000) // 2秒超时
-.then(result => {
-  console.log('操作在超时时间内完成:', result);
-})
-.catch(error => {
-  console.error('操作超时或失败:', error.message);
-});
-```
-
----
-
-## 工厂函数
-
-### createPromiseLogic
-
-创建自定义命名的 PromiseLogic 方法集合。
-
-**语法**
-
-```typescript
-function createPromiseLogic(
-  options?: CreatePromiseLogicOptions
-): Record<string, Function>
-
-interface CreatePromiseLogicOptions {
-  prefix?: string;
-  suffix?: string;
-  rename?: Record<string, string>;
-}
-```
-
-**参数**
-
-- `options.prefix`：方法名前缀
-- `options.suffix`：方法名后缀
-- `options.rename`：方法重命名映射
-
-**返回值**
-
-- `Record<string, Function>`：自定义命名的方法集合
-
-**示例**
-
-```typescript
-import { createPromiseLogic } from 'promise-logic';
-
-// 添加前缀
-const logic = createPromiseLogic({ prefix: 'logic_' });
-logic.logic_and([Promise.resolve(1), Promise.resolve(2)]);
-
-// 添加后缀
-const logic = createPromiseLogic({ suffix: '_logic' });
-logic.and_logic([Promise.resolve(1), Promise.resolve(2)]);
-
-// 重命名
-const logic = createPromiseLogic({
-  rename: {
-    and: 'all',
-    or: 'any',
-    xor: 'exclusive'
-  }
-});
-logic.all([Promise.resolve(1), Promise.resolve(2)]);
-logic.any([Promise.resolve(1), Promise.resolve(2)]);
-logic.exclusive([Promise.resolve(1), Promise.reject(2)]);
-
-// 组合使用
-const logic = createPromiseLogic({
-  prefix: 'pl_',
-  suffix: '_op',
-  rename: {
-    and: 'all',
-    or: 'any'
-  }
-});
-logic.pl_all_op([Promise.resolve(1), Promise.resolve(2)]);
-logic.pl_any_op([Promise.resolve(1), Promise.resolve(2)]);
-```
-
-**支持的方法**
-
-- `and`
-- `or`
-- `not`
-- `race`
-- `allSettled`
-- `xor`
-- `nand`
-- `nor`
-- `xnor`
-- `majority`
-- `allFulfilled`
-- `allRejected`
-
----
-
-## 错误处理
-
-### PromiseLogicError
-
-所有逻辑门方法抛出的错误类型。
-
-**属性**
-
-- `type`：错误类型字符串
-- `message`：错误描述
-- `results`：所有 Promise 的结果数组
-
-**错误类型**
-
-| 错误类型 | 描述 |
-|---------|------|
-| `AND_ERROR` | AND 门失败 |
-| `XOR_ERROR` | XOR 条件失败 |
-| `NAND_ERROR` | NAND 条件失败 |
-| `NOR_ERROR` | NOR 条件失败 |
-| `XNOR_ERROR` | XNOR 条件失败 |
-| `MAJORITY_ERROR` | 多数条件失败 |
-| `ALL_SUCCESSFUL_ERROR` | 全部成功条件失败 |
-| `ALL_FAILED_ERROR` | 全部失败条件失败 |
-
-**示例**
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-PromiseLogic.xor([
-  Promise.resolve(1),
-  Promise.resolve(2)
-])
-.catch(error => {
-  if (error.type === 'XOR_ERROR') {
-    console.error('XOR 错误:', error.message);
-    console.error('结果:', error.results);
-  }
-});
-```
-
----
-
-## 类型定义
-
-### FlipFlop
-
-触发器接口（已从文档中排除，但仍在类型定义中）。
-
-### CreatePromiseLogicOptions
-
-工厂函数选项接口。
-
-```typescript
-interface CreatePromiseLogicOptions {
-  prefix?: string;
-  suffix?: string;
-  rename?: Record<string, string>;
-}
-```
-
-### PromiseWithTimer
-
-带定时器的 Promise 包装类。
-
-```typescript
-class PromiseWithTimer<T> {
-  maxTimer(ms: number): Promise<T>;
-  then<U>(...): PromiseWithTimer<U>;
-  catch<U>(...): PromiseWithTimer<U>;
-  finally(...): PromiseWithTimer<T>;
-  toPromise(): Promise<T>;
-}
-```
-
----
-
-## 使用示例
-
-### 主备服务调用（XOR）
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const primary = fetch('https://api.main.com/data');
-const backup = fetch('https://api.backup.com/data');
-
-PromiseLogic.xor([primary, backup])
-  .then(result => {
-    console.log('成功获取数据:', result);
+  .then((results) => {
+    console.log('达到自定义阈值，成功结果:', results); // ['service1', 'service2']
   })
-  .catch(error => {
-    if (error.type === 'XOR_ERROR') {
-      console.error('主备服务均成功或均失败');
-    }
+  .catch((error) => {
+    console.error('未达到自定义阈值:', error);
   });
 ```
 
-### 多数决决策（Majority）
+## 最近更新
 
-```typescript
-import { PromiseLogic } from 'promise-logic';
+### v2.8.0
 
-const services = [
-  fetch('https://api.node1.com/vote'),
-  fetch('https://api.node2.com/vote'),
-  fetch('https://api.node3.com/vote')
-];
+- **性能优化**：从底层优化 `allFulfilled` 和 `allRejected` 实现逻辑，存在结果便立即返回，同时保持输入和输出顺序一致
+- **新增链式超时控制自定义错误信息**：可以在 `maxTimer` 方法中自定义超时错误信息
+- **类型修复**：修复 TypeScript 版本的类型声明问题
+- **测试完善**：添加 `allFulfilled`、`allRejected` 和 `maxTimer` 完整测试用例
+- **代码重构**：改进代码结构，提高可维护性
 
-PromiseLogic.majority(services)
-  .then(results => {
-    console.log('多数服务返回成功:', results);
-  });
-```
+### v2.7.0
 
-### 资源竞争（OR）
+- **新增模块化架构**：将逻辑门实现独立为单独模块，提高代码可维护性
+- **修复 NOT 逻辑门**：修复了 NOT 逻辑门在生产环境中的潜在风险
+- **优化错误提示**：改进错误信息格式，提供更清晰的错误详情
+- **完善测试覆盖**：为 v1 和 v2 版本添加完整的工厂函数测试
+- **更新文档**：添加自定义工厂函数使用指南
 
-```typescript
-import { PromiseLogic } from 'promise-logic';
+### 使用工厂函数
 
-const cdnNodes = [
-  fetch('https://cdn1.com/resource'),
-  fetch('https://cdn2.com/resource'),
-  fetch('https://cdn3.com/resource')
-];
+工厂函数允许你创建自定义命名的 PromiseLogic 方法：
 
-PromiseLogic.or(cdnNodes)
-  .then(result => {
-    console.log('从最快节点获取资源:', result);
-  });
-```
+```javascript
+import { createPromiseLogic } from 'promise-logic/factory';
 
-### 全链路校验（AND）
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-const validations = [
-  validateUser(),
-  validateOrder(),
-  validatePayment(),
-  validateInventory()
-];
-
-PromiseLogic.and(validations)
-  .then(results => {
-    console.log('所有校验通过:', results);
-  })
-  .catch(error => {
-    console.error('校验失败:', error);
-  });
-```
-
-### 超时控制
-
-```typescript
-import { PromiseLogic } from 'promise-logic';
-
-PromiseLogic.and([
-  fetch('https://api.example.com/data'),
-  fetch('https://api.example.com/metadata')
-])
-.maxTimer(5000) // 5秒超时
-.then(results => {
-  console.log('请求成功:', results);
-})
-.catch(error => {
-  console.error('请求超时或失败:', error.message);
-});
-```
-
-### 自定义工厂函数
-
-```typescript
-import { createPromiseLogic } from 'promise-logic';
-
-const api = createPromiseLogic({
+// 创建自定义命名的实例
+const logic = createPromiseLogic({
   prefix: 'api_',
   suffix: '_call',
   rename: {
@@ -908,41 +307,84 @@ const api = createPromiseLogic({
   }
 });
 
-api.api_all_call([
-  fetch('/api/users'),
-  fetch('/api/posts')
-]);
+// 使用自定义命名的方法
+logic.api_all_call([fetch('/api/users'), fetch('/api/posts')]);
 
-api.api_any_call([
-  fetch('/api/cache'),
-  fetch('/api/database')
-]);
+logic.api_any_call([fetch('/api/cache'), fetch('/api/database')]);
+```
+
+### TypeScript 支持
+
+```typescript
+import { PromiseLogic } from 'promise-logic/typescript';
+
+// 类型推断
+PromiseLogic.and([Promise.resolve(1), Promise.resolve(2)]).then(
+  (results: number[]) => {
+    console.log(results);
+  }
+);
+
+// 类型断言
+PromiseLogic.and<number>([Promise.resolve(1), Promise.resolve(2)]);
 ```
 
 ---
 
-## 实际应用场景
+### **5. API 参考**
+
+| API            | 说明                                                                                                                                       |
+| :------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| `and`          | 所有 Promise 成功，返回结果数组；任一失败则整体失败，等价原生 `Promise.all`。                                                              |
+| `or`           | 至少一个 Promise 成功，返回首个成功结果；全部失败则整体失败，等价原生 `Promise.any`。                                                      |
+| `xor`          | **有且仅有一个 Promise 成功**，返回该结果；否则抛出 `XOR_ERROR`。                                                                          |
+| `nand`         | 不是所有 Promise 都成功（至少一个失败），返回成功结果数组；全部成功则整体失败。                                                            |
+| `nor`          | 所有 Promise 都失败（没有任务成功），返回空数组；任一成功则整体失败。                                                                      |
+| `xnor`         | 所有 Promise 都成功或都失败（状态相同），返回成功结果数组；否则抛出 `XNOR_ERROR`。                                                         |
+| `not`          | 反转单个 Promise 的结果：成功变失败，失败变成功。                                                                                          |
+| `majority`     | 超过指定阈值的 Promise 成功，返回成功结果数组；否则整体失败。接受 `options` 参数，其中 `max` 属性可自定义阈值（默认：0.5），范围：[0,1]。 |
+| `allFulfilled` | 返回所有成功结果作为数组，忽略失败结果。存在成功结果立即返回，同时保持输入输出顺序一致。                                                   |
+| `allRejected`  | 返回所有失败结果作为数组，忽略成功结果。存在失败结果立即返回，同时保持输入输出顺序一致。                                                   |
+| `allSettled`   | 返回所有结果（包括成功和失败）作为数组，等价原生 `Promise.allSettled`）。                                                                  |
+| `race`         | 返回第一个完成的 Promise 结果（无论成功或失败），等价原生 `Promise.race`。                                                                 |
+| `maxTimer`     | 为任何 Promise 操作添加超时功能（单位：毫秒）。支持自定义超时错误信息。                                                                    |
+
+### **6. 实际应用场景**
 
 1. **主备服务调用**
-   - 使用 `xor` 确保有且仅有一个服务响应
+   - 使用 `xor` 确保**有且仅有一个服务响应**，避免重复处理。
 
 2. **分布式决策**
-   - 使用 `majority` 实现多数决共识
+   - 使用 `majority` 实现多数决共识（如分布式投票）。
 
 3. **资源竞争**
-   - 使用 `or` 获取首个可用资源
-   - 使用 `not` 检查资源是否可用
+   - 使用 `or` 获取首个可用资源（如 CDN 节点选择）。
+   - 使用 `not` 检查资源是否可用。
 
 4. **全链路校验**
-   - 使用 `and` 确保所有依赖服务均成功
+   - 使用 `and` 确保所有依赖服务均成功（如订单创建）。
 
-5. **错误收集**
-   - 使用 `allRejected` 收集所有错误
-   - 使用 `allSettled` 获取完整状态
+5. **超时控制**
+   - 使用 `maxTimer` 为任何 Promise 操作添加超时功能（单位：毫秒），超时后返回自定义错误信息。默认：`Promise timed out after ${ms} ms`。
+
+6. **部分成功处理**
+   - 使用 `allFulfilled` 并发执行所有 Promise，返回成功结果数组（如批量 API 调用，适用于高并发、部分失败可接受的场景）。
+   - 使用 `allRejected` 并发执行所有 Promise，返回失败结果数组（如错误日志收集，适用于批量处理失败场景）。
+
+7. **全量结果获取**
+   - 使用 `allSettled` 获取所有 Promise 的结果（无论成功或失败）。
+
+8. **快速响应**
+   - 使用 `race` 返回第一个完成的 Promise 结果（无论成功或失败）。
+
+9. **状态验证**
+   - 使用 `nand` 验证不是所有 Promise 都成功（至少一个失败）。
+   - 使用 `nor` 验证所有 Promise 都失败（没有任务成功）。
+   - 使用 `xnor` 验证所有 Promise 都成功或都失败（状态相同）。
 
 ---
 
-## 贡献指南
+### **7. 贡献指南**
 
 1. **开发环境**
    ```bash
@@ -950,20 +392,18 @@ api.api_any_call([
    cd promise-logic
    npm install
    ```
-
 2. **测试**
    ```bash
    npm test
    ```
-
 3. **提交规范**
-   - 提交信息需包含 `feat:`（新功能）、`fix:`（修复）、`docs:`（文档）前缀
-   - Pull Request 需附带测试用例
+   - 提交信息需包含 `feat:`（新功能）、`fix:`（修复）、`docs:`（文档）前缀。
+   - Pull Request 需附带测试用例。
 
 ---
 
-## 资源链接
+### **8. 资源链接**
 
-- **GitHub 仓库**：https://github.com/xier123456/promise-logic
-- **npm 包**：https://www.npmjs.com/package/promise-logic
-- **Issue 跟踪**：https://github.com/xier123456/promise-logic/issues
+- **GitHub 仓库**：[https://github.com/xier123456/promise-logic](https://github.com/xier123456/promise-logic)
+- **npm 包**：[https://www.npmjs.com/package/promise-logic](https://www.npmjs.com/package/promise-logic)
+- **Issue 跟踪**：[GitHub Issues](https://github.com/xier123456/promise-logic/issues)
