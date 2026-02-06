@@ -63,7 +63,7 @@ export class PromiseLogic {
   
   // 扩展逻辑门
   static xor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
-  static not<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T>;
+  static not<T>(promise: T | PromiseLike<T>): PromiseWithTimer<unknown>;
   static nand<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
   static nor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
   static xnor<T>(iterable: Iterable<T | PromiseLike<T>>): PromiseWithTimer<T[]>;
