@@ -1,10 +1,11 @@
 import { BaseGate } from "./BaseGate";
 
 export class allRejected extends BaseGate {
-  async execute<T>(iterable: Iterable<T | PromiseLike<T>>, options = {}): Promise<T[]> {
+  async execute<T>(iterable: Iterable<T | PromiseLike<T>>): Promise<T[]> {
     return new Promise((resolve) => {
       const results: (T | undefined)[] = [];
       let completedCount = 0;
+      let rejectCount = 0;
       const promises=[...iterable];
       const total = promises?.length ?? 0;
 
@@ -16,15 +17,18 @@ export class allRejected extends BaseGate {
       promises.forEach((promise, index) => {
         Promise.resolve(promise)
           .then(() => {
-            results[index] = undefined;
+            results[index] = undefined
           })
           .catch((reason) => {
-            completedCount++;
+            rejectCount++;
             results[index] = reason;
           })
           .finally(() => {
-            if (completedCount >0) {
+            completedCount++;
+            if (rejectCount > 0) {
               resolve(results.filter((item) => item !== undefined));
+            } else if (completedCount === total) {
+              resolve([]);
             }
           });
       });

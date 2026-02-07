@@ -5,25 +5,30 @@ export class allFulfilled extends BaseGate {
     return new Promise((resolve) => {
       const results = [];
       let completedCount = 0;
-      const total = [...iterable]?.length ?? 0
+      let fulfillCount = 0;
+      const promises = [...iterable];
+      const total = promises?.length ?? 0
 
       if (total === 0) {
         resolve(results);
         return;
       }
 
-      iterable.forEach((promise, index) => {
-        promise
+      promises.forEach((promise, index) => {
+        Promise.resolve(promise)
           .then((value) => {
-            completedCount++;
+            fulfillCount++;
             results[index] = value;
           })
           .catch(() => {
             results[index] = undefined;
           })
           .finally(() => {
-            if (completedCount >0) {
+            completedCount++;
+            if (fulfillCount > 0) {
               resolve(results.filter((item) => item !== undefined));
+            } else if (completedCount === total) {
+              resolve([]);
             }
           });
       });

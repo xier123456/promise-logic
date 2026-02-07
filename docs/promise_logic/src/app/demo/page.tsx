@@ -103,14 +103,6 @@ export default function LogicGatesDemoPage() {
 
   return (
     <div className="w-[90%] sm:w-[75%] mx-auto py-12">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          PromiseLogic Visualizer
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300">
-          Interactive demonstration of PromiseLogic operations
-        </p>
-      </div>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -146,7 +138,7 @@ export default function LogicGatesDemoPage() {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
           Select Operation
         </h3>
-        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3`}>
+        <div className={`grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-3`}>
           {filteredOperations.map((operation) => (
             <button
               key={operation.type}

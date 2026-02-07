@@ -80,27 +80,31 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
 
 export const EXTENDED_LOGIC_OPERATIONS: ExtendedLogicOperations = {
   allFulfilled: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    const result = await PromiseLogic.allFulfilled(promises)
-    const hasFulfilled = result.length > 0
-    return { success: hasFulfilled, data: result }
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
+    const result = await PromiseLogic.allFulfilled(promises) as string[]
+    return { success: true, data: result }
   },
   allRejected: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    const result = await PromiseLogic.allRejected(promises)
-    const hasRejected = result.length > 0
-    return { success: hasRejected, data: result }
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
+    const result = await PromiseLogic.allRejected(promises) as string[]
+    return { success: true, data: result }
   },
   allSettled: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
-    const result = await PromiseLogic.allSettled(promises)
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
+    const result = await PromiseLogic.allSettled(promises) 
     return { success: true, data: result }
   }
 }
 
 export const UTILITY_OPERATIONS: UtilityOperations = {
   not: async (input: boolean) => {
-    const promise = input ? Promise.resolve(input) : Promise.reject(input)
+    const promise = input ? Promise.resolve('p1') : Promise.reject('p1')
     try {
       const result = await PromiseLogic.not(promise)
       return { success: true, data: result }
@@ -109,9 +113,11 @@ export const UTILITY_OPERATIONS: UtilityOperations = {
     }
   },
   race: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
-      const result = await PromiseLogic.race(promises)
+      const result = await PromiseLogic.race(promises) as string
       return { success: true, data: result }
     } catch {
       return { success: false, data: null }

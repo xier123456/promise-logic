@@ -1,6 +1,6 @@
 {
   "name": "promise-logic",
-  "version": "2.8.4",
+  "version": "2.8.5",
   "description": "Compose promises with logic gate semantics (AND, OR, XOR, NAND, NOR, XNOR, Majority). Forget APIs, remember logic.",
   "type": "module",
   "main": "dist/index.cjs.js",

@@ -5,25 +5,30 @@ export class allRejected extends BaseGate {
     return new Promise((resolve) => {
       const results = [];
       let completedCount = 0;
-      const total = [...iterable]?.length ?? 0;
+      let rejectCount = 0;
+      const promises = [...iterable];
+      const total = promises?.length ?? 0;
 
       if (total === 0) {
         resolve(results);
         return;
       }
 
-      iterable.forEach((promise, index) => {
-        promise
+      promises.forEach((promise, index) => {
+        Promise.resolve(promise)
           .then(() => {
             results[index] = undefined;
           })
           .catch((reason) => {
-            completedCount++;
+            rejectCount++;
             results[index] = reason;
           })
           .finally(() => {
-            if (completedCount > 0) {
+            completedCount++;
+            if (rejectCount > 0) {
               resolve(results.filter((item) => item !== undefined));
+            } else if (completedCount === total) {
+              resolve([]);
             }
           });
       });

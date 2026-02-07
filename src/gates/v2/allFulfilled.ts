@@ -5,6 +5,7 @@ export class allFulfilled extends BaseGate {
     return new Promise<T[]>((resolve) => {
       const results: (T | undefined)[] = [];
       let completedCount = 0;
+      let fulfillCount = 0;
       const promises = [...iterable];
       const total = promises?.length ?? 0;
 
@@ -16,15 +17,18 @@ export class allFulfilled extends BaseGate {
       promises.forEach((promise, index) => {
         Promise.resolve(promise)
           .then((value) => {
-            completedCount++;
+            fulfillCount++;
             results[index] = value;
           })
           .catch(() => {
             results[index] = undefined;
           })
           .finally(() => {
-            if (completedCount > 0) {
+            completedCount++;
+            if (fulfillCount > 0) {
               resolve(results.filter((item): item is T => item !== undefined));
+            } else if (completedCount === total) {
+              resolve([]);
             }
           });
       });

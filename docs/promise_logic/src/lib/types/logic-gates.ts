@@ -1,11 +1,11 @@
 export interface LogicGateResult {
   success: boolean
-  data: unknown
+  data: boolean | string[] |unknown
 }
 
 export interface ExtendedLogicGateResult {
   success: boolean
-  data: unknown[]
+  data: string[] | PromiseSettledResult<string>[]
 }
 
 export type LogicGateHandler = (inputs: boolean[]) => Promise<LogicGateResult>
