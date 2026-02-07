@@ -1,6 +1,6 @@
 export interface LogicGateResult {
   success: boolean
-  data: boolean | string[] |unknown
+  data: string | string[] | null|unknown
 }
 
 export interface ExtendedLogicGateResult {

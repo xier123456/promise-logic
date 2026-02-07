@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { ExtendedLogicGateType, LogicGateType, utilityLogicGateType } from '@/lib/types/logic-gate';
+import {
+  ExtendedLogicGateType,
+  LogicGateType,
+  utilityLogicGateType
+} from '@/lib/types/logic-gate';
 import {
   EXTENDED_LOGIC_OPERATIONS,
   UTILITY_OPERATIONS
@@ -26,64 +30,64 @@ const OPERATIONS_INFO: OperationInfo[] = [
   {
     type: 'AND',
     category: 'logic',
-    description: 'Output is true only when all inputs are true'
+    description: 'All Promises succeed, returns result array; any failure causes overall failure, equivalent to native Promise.all'
   },
   {
     type: 'OR',
     category: 'logic',
-    description: 'Output is true when at least one input is true'
+    description: 'At least one Promise succeeds, returns first success result; all failures cause overall failure, equivalent to native Promise.any'
   },
   {
     type: 'XOR',
     category: 'logic',
-    description: 'Output is true when exactly one input is true'
+    description: 'Exactly one Promise succeeds, returns that result; otherwise throws XOR_ERROR'
   },
   {
     type: 'NAND',
     category: 'logic',
-    description: 'Output is true when not all inputs are true'
+    description: 'Not all Promises succeed (at least one fails), returns success result array; all successes cause overall failure'
   },
   {
     type: 'NOR',
     category: 'logic',
-    description: 'Output is true when all inputs are false'
+    description: 'All Promises fail (no tasks succeed), returns empty array; any success causes overall failure'
   },
   {
     type: 'XNOR',
     category: 'logic',
-    description: 'Output is true when all inputs are true or all are false'
+    description: 'All Promises either succeed or fail (same status), returns success result array; otherwise throws XNOR_ERROR'
   },
   {
     type: 'MAJORITY',
     category: 'logic',
-    description: 'Output is true when the majority of inputs are true'
+    description: 'More than specified threshold of Promises succeed, returns success result array; otherwise overall failure. Accepts options parameter, max property customizes threshold (default: 0.5)'
   },
   // Extended Operations
   {
     type: 'allFulfilled',
     category: 'extended',
-    description: 'Returns all successful results, ignores failures'
+    description: 'Returns all success results as array, ignores failures. Returns immediately when success results exist, maintains input-output order consistency'
   },
   {
     type: 'allRejected',
     category: 'extended',
-    description: 'Returns all failure results, ignores successes'
+    description: 'Returns all failure results as array, ignores successes. Returns immediately when failure results exist, maintains input-output order consistency'
   },
   {
     type: 'allSettled',
     category: 'extended',
-    description: 'Returns all results (both successes and failures)'
+    description: 'Returns all results (both successes and failures) as array, equivalent to native Promise.allSettled'
   },
   // Utility Methods
   {
     type: 'not',
     category: 'utility',
-    description: 'Inverts the result of a single promise'
+    description: 'Inverts single Promise result: success becomes failure, failure becomes success'
   },
   {
     type: 'race',
     category: 'utility',
-    description: 'Returns the first completed promise result'
+    description: 'Returns first completed Promise result (whether success or failure), equivalent to native Promise.race'
   }
 ];
 
@@ -103,6 +107,11 @@ export default function LogicGatesDemoPage() {
 
   return (
     <div className="w-[90%] sm:w-[75%] mx-auto py-12">
+      <div className='w-full  flex  items-center justify-end '>
+        <div className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-4 py-2 rounded-lg font-semibold">
+          Version 2.8.5
+        </div>
+      </div>
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
@@ -167,7 +176,12 @@ export default function LogicGatesDemoPage() {
       </div>
 
       <LogicGateVisualizer
-        type={selectedOperation as LogicGateType | ExtendedLogicGateType | utilityLogicGateType}
+        type={
+          selectedOperation as
+            | LogicGateType
+            | ExtendedLogicGateType
+            | utilityLogicGateType
+        }
         interactive={true}
         size="md"
       />

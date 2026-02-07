@@ -36,7 +36,7 @@ export function LogicGateVisualizer({
 
   useEffect(() => {
     calculateOutput();
-    setJsonOutput(JSON.stringify(output.data || null))
+    setJsonOutput(output.data as string);
 
   }, [inputs, type]);
 
@@ -128,7 +128,7 @@ export function LogicGateVisualizer({
 const result = await PromiseLogic.${type.toLowerCase()}(
   ${inputs[0].status ? `Promise.resolve('p1')` : `Promise.reject('p1')`}
 )
-// Output: ${useMemo(() => jsonOutput, [jsonOutput])}
+// Output: [${output.data || ''}]
 `
       : `
 // ${type} Logic
@@ -141,7 +141,7 @@ const result = await PromiseLogic.${type.toLowerCase()}([
     )
     .join(',\n  ')}
 ])
-// Output: ${useMemo(() => jsonOutput, [jsonOutput])}
+// Output:[${output.data || ''}]
 `;
 
   return (
@@ -149,7 +149,7 @@ const result = await PromiseLogic.${type.toLowerCase()}([
       <div className='md:flex-3'>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {type} Gate 
+            {type}  
           </h2>
 
           {interactive && (
@@ -264,7 +264,7 @@ const result = await PromiseLogic.${type.toLowerCase()}([
 
             {!isProcessing && output.data !== null && (
               <>
-                {typeof output.data === 'boolean' ? (
+                {typeof output.data === 'string' ? (
                   <div
                     className={cn(
                       'rounded-lg px-4 py-3 font-bold transition-all duration-200 flex items-center justify-center',
@@ -273,20 +273,30 @@ const result = await PromiseLogic.${type.toLowerCase()}([
                         : 'bg-red-500 text-white shadow-lg shadow-red-500/50'
                     )}
                   >
-                    {output.data.toString()}
+                    {output.data}
                   </div>
-                ) : (
-                 Array.isArray(output.data) && output.data.map((item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className={cn(
-                        'rounded-lg px-4 py-3 font-bold transition-all duration-200 flex items-center justify-center',
-                        'bg-green-500 text-white shadow-lg shadow-green-500/50'
-                      )}
-                    >
-                      {item}
-                    </div>
-                  ))
+                ) : Array.isArray(output.data) && (
+                  output.data.map((item, index) => {
+                    const isSettledResult = typeof item === 'object' && item !== null && 'status' in item;
+                    const content = isSettledResult
+                      ? (item.status === 'fulfilled' ? item.value : item.reason)
+                      : item;
+                    const bgColor = isSettledResult && item.status === 'rejected'
+                      ? 'bg-red-500 text-white shadow-lg shadow-red-500/50'
+                      : 'bg-green-500 text-white shadow-lg shadow-green-500/50';
+                    
+                    return (
+                      <div
+                        key={`${content}-${index}`}
+                        className={cn(
+                          'rounded-lg px-4 py-3 font-bold transition-all duration-200 flex items-center justify-center',
+                          bgColor
+                        )}
+                      >
+                        {content}
+                      </div>
+                    );
+                  })
                 )}
               </>
             )}
@@ -295,13 +305,8 @@ const result = await PromiseLogic.${type.toLowerCase()}([
       </div>
 
       <div className=" grid grid-cols-1 md:flex-2 gap-6">
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 w-full">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            Code Example
-          </h3>
 
           <CodeMarkdown content={`\`\`\`javascript\n${codeExample}\n\`\`\``} />
-        </div>
       </div>
     </div>
   );

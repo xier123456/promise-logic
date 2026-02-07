@@ -22,8 +22,8 @@ export class PromiseWithTimer {
           reject(new Error(errorMessage));
         }, ms);
       })
-    ]);
-    return promiseTime.finally(() => clearTimeout(timerId));
+    ])
+    return promiseTime.finally(() => clearTimeout(timerId))
   }
 
   then(onfulfilled, onrejected) {

@@ -14,7 +14,9 @@ export const LOGIC_GATES: LogicGateType[] = [
 
 export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
   AND: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.and(promises)
       return { success: true, data: result }
@@ -23,7 +25,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   OR: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.or(promises)
       return { success: true, data: result }
@@ -32,7 +36,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   XOR: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.xor(promises)
       return { success: true, data: result }
@@ -41,7 +47,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   NAND: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.nand(promises)
       return { success: true, data: result }
@@ -50,7 +58,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   NOR: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.nor(promises)
       return { success: true, data: result }
@@ -59,7 +69,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   XNOR: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.xnor(promises)
       return { success: true, data: result }
@@ -68,7 +80,9 @@ export const LOGIC_GATE_TRUTH_TABLE: Record<LogicGateType, LogicGateHandler> = {
     }
   },
   MAJORITY: async (inputs: boolean[]) => {
-    const promises = inputs.map(input => input ? Promise.resolve(input) : Promise.reject(input))
+    const promises = inputs.map((input, index) => 
+      input ? Promise.resolve(`p${index + 1}`) : Promise.reject(`p${index + 1}`)
+    )
     try {
       const result = await PromiseLogic.majority(promises)
       return { success: true, data: result }
@@ -119,8 +133,8 @@ export const UTILITY_OPERATIONS: UtilityOperations = {
     try {
       const result = await PromiseLogic.race(promises) as string
       return { success: true, data: result }
-    } catch {
-      return { success: false, data: null }
+    } catch (error) {
+      return { success: false, data: error as string }
     }
   }
 }
